@@ -10,8 +10,9 @@ import (
 	"net"
 	"net/http"
 	"ngMarketplace/config"
-	http2 "ngMarketplace/internal/transport/http"
+	"ngMarketplace/internal/transport/http/routes"
 	"ngMarketplace/pkg/logger"
+	"ngMarketplace/pkg/postgres"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -22,8 +23,9 @@ type App struct {
 	cfg        *config.Config
 	wg         sync.WaitGroup
 	router     *gin.Engine
-	httpServer http.Server
+	httpServer *http.Server
 	logger     logger.Logger
+	pg         *postgres.Postgres
 }
 
 func New(cfg *config.Config) (*App, error) {
@@ -36,19 +38,20 @@ func New(cfg *config.Config) (*App, error) {
 
 	l.Debug("Configurations: %v", cfg)
 
-	//pg, err := postgres.New(cfg.PG.URL, postgres.MaxPoolSize(cfg.PG.PoolMax))
-	//if err != nil {
-	//	l.Fatal(fmt.Sprintf("app - Run - postgres.New: %v", err))
-	//}
-	//l.Debug("PostgreSQL initialized")
+	pg, err := postgres.New(cfg.PG.URL, postgres.MaxPoolSize(cfg.PG.PoolMax))
+	if err != nil {
+		l.Fatal(fmt.Sprintf("app - Run - postgres.New: %v", err))
+	}
+	l.Debug("PostgreSQL initialized")
 
 	//runner := async.NewBackgroundRunner(&a.wg)
 
-	router := http2.NewRouter()
+	router := routes.NewRouter()
 
 	a.cfg = cfg
 	a.router = router
 	a.logger = l
+	a.pg = pg
 
 	return a, nil
 }
@@ -77,10 +80,10 @@ func (a *App) Run(ctx context.Context) error {
 	a.logger.Info("waiting for background tasks to finish...")
 	a.wg.Wait()
 
-	//if a.pg != nil {
-	//	a.pg.Close()
-	//	a.logger.Info("Postgres connection closed")
-	//}
+	if a.pg != nil {
+		a.pg.Close()
+		a.logger.Info("Postgres connection closed")
+	}
 
 	return nil
 }
@@ -109,7 +112,7 @@ func (a *App) startHTTP(ctx context.Context) error {
 
 	handler := c.Handler(a.router)
 
-	a.httpServer = http.Server{
+	a.httpServer = &http.Server{
 		Handler:      handler,
 		WriteTimeout: a.cfg.HTTP.WriteTimeout,
 		ReadTimeout:  a.cfg.HTTP.ReadTimeout,

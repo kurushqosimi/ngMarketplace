@@ -30,3 +30,7 @@
 
   logger:
     log_level: 'debug'
+
+  postgres:
+    pool_max: 2
+    db_source: postgres://marketplace:marketplace@localhost:5432/marketplace_ng

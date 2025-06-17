@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:17.2-alpine3.21
+    environment:
+      - POSTGRES_USER=marketplace
+      - POSTGRES_PASSWORD=marketplace
+      - POSTGRES_DB=marketplace_db
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_SOURCE=postgres://marketplace:marketplace@postgres:5432/marketplace_db?sslmode=
+    depends_on:
+      - postgres
+    entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
+    command: ["/app/main"]
