@@ -14,7 +14,7 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - DB_SOURCE=postgres://marketplace:marketplace@postgres:5432/marketplace_db?sslmode=
+      - DB_SOURCE=postgres://marketplace:marketplace@postgres:5432/marketplace_db?sslmode=false
     depends_on:
       - postgres
     entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]

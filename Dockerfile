@@ -28,6 +28,7 @@ RUN chmod +x /app/start.sh /app/wait-for.sh
 COPY migrations /app/migrations
 
 RUN ls -la /app && ls -la /app/migrations
+RUN apk add netcat-openbsd
 
 EXPOSE 8081
 CMD ["/app/main"]
