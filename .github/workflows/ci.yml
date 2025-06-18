@@ -29,13 +29,19 @@ jobs:
       - name: Build and run Docker Compose
         run: |
           docker compose -f docker-compose.yml up --build -d
-          sleep 10  # Wait for services to start
+          for i in {1..30}; do
+            if curl --fail http://localhost:8081; then
+              echo "API is up!"
+              break
+            fi
+            echo "Waiting for API to be ready..."
+            sleep 2
+          done
           docker compose -f docker-compose.yml logs  # Output logs for debugging
 
-      # Verify the application is running
       - name: Check application health
         run: |
-          curl --fail --retry 3 --retry-delay 5 http://localhost:8081 || exit 1
+          curl --fail --retry 3 --retry-delay 5 http://localhost:8081/health || exit 1
 
       # Stop and remove Docker Compose services
       - name: Stop Docker Compose

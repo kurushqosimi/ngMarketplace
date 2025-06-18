@@ -3,7 +3,7 @@
     version: '1.0.0'
 
   http:
-    port: '9090'
+    port: '8081'
     read-timeout: '10s'
     write-timeout: '10s'
     cors:

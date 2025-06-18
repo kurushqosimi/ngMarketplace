@@ -10,7 +10,7 @@ import (
 	"net"
 	"net/http"
 	"ngMarketplace/config"
-	"ngMarketplace/internal/transport/http/routes"
+	"ngMarketplace/internal/transport/http/router"
 	"ngMarketplace/pkg/logger"
 	"ngMarketplace/pkg/postgres"
 	"os/signal"
@@ -46,7 +46,7 @@ func New(cfg *config.Config) (*App, error) {
 
 	//runner := async.NewBackgroundRunner(&a.wg)
 
-	router := routes.NewRouter()
+	router := router.NewRouter()
 
 	a.cfg = cfg
 	a.router = router
