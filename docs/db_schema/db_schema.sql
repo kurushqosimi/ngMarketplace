@@ -139,6 +139,7 @@ CREATE INDEX idx_product_variants_attributes ON product_variants USING GIN (attr
 CREATE INDEX idx_products_category_id ON products (category_id);
 CREATE INDEX idx_products_user_id ON products (user_id);
 CREATE INDEX idx_product_variants_stock ON product_variants (stock);
+CREATE INDEX idx_categories_name_search ON categories USING GIN (to_tsvector('simple', category_name));
 
 -- Комментарии
 COMMENT

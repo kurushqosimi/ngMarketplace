@@ -14,22 +14,13 @@ type Repository struct {
 	client postgres.Postgres
 }
 
-type Storage interface {
-	Create(ctx context.Context, category *Category) error
-	GetAll(ctx context.Context) ([]*Category, error)
-	FindOne(ctx context.Context, id string) (*Category, error)
-	Update(ctx context.Context, category *Category) error
-	Delete(ctx context.Context, id string) error
-	GetByParentID(ctx context.Context, parentID string) ([]*Category, error)
-	GetPaginated(ctx context.Context, categoryName string, filters data.Filters) ([]*Category, data.Metadata, error)
-	Restore(ctx context.Context, categoryID string) error
-}
-
-func NewRepository(client postgres.Postgres) Storage {
+func NewRepository(client postgres.Postgres) *Repository {
 	return &Repository{client: client}
 }
 
 func (r Repository) Create(ctx context.Context, category *Category) error {
+	const op = "Create"
+
 	query := `
 		INSERT INTO categories (category_name, parent_id, attribute_schema)
 		VALUES ($1, $2, $3)
@@ -50,13 +41,15 @@ func (r Repository) Create(ctx context.Context, category *Category) error {
 		&category.CreatedAt,
 		&category.Active,
 	); err != nil {
-		return fmt.Errorf("failed to create category: %w", err)
+		return postgres.ErrDoQuery(op, err)
 	}
 
 	return nil
 }
 
 func (r Repository) GetAll(ctx context.Context) ([]*Category, error) {
+	const op = "GetAll"
+
 	query := `
 		SELECT category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
 		FROM categories
@@ -64,7 +57,7 @@ func (r Repository) GetAll(ctx context.Context) ([]*Category, error) {
 
 	rows, err := r.client.Pool.Query(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, postgres.ErrDoQuery(op, err)
 	}
 	defer rows.Close()
 
@@ -83,20 +76,22 @@ func (r Repository) GetAll(ctx context.Context) ([]*Category, error) {
 			&category.DeletedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan rows: %w", err)
+			return nil, postgres.ErrScan(op, err)
 		}
 
 		categories = append(categories, &category)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("received rows error: %w", err)
+		return nil, postgres.ErrReadRows(op, err)
 	}
 
 	return categories, nil
 }
 
 func (r Repository) FindOne(ctx context.Context, id string) (*Category, error) {
+	const op = "FindOne"
+
 	query := `
 		SELECT category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
 		FROM categories
@@ -118,13 +113,18 @@ func (r Repository) FindOne(ctx context.Context, id string) (*Category, error) {
 		&category.UpdatedAt,
 		&category.DeletedAt,
 	); err != nil {
-		return nil, fmt.Errorf("failed to find one: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, postgres.ErrDoQuery(op, err)
 	}
 
 	return &category, nil
 }
 
 func (r Repository) Update(ctx context.Context, category *Category) error {
+	const op = "Update"
+
 	query := `
 		UPDATE categories
 		SET category_name = $1, parent_id = $2, attribute_schema = $3
@@ -145,9 +145,9 @@ func (r Repository) Update(ctx context.Context, category *Category) error {
 	).Scan(&category.UpdatedAt); err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
-			return fmt.Errorf("failed to update category: %w", ErrUpdate)
+			return ErrUpdate
 		default:
-			return fmt.Errorf("failed to update category: %w", err)
+			return postgres.ErrDoQuery(op, err)
 		}
 	}
 
@@ -155,6 +155,8 @@ func (r Repository) Update(ctx context.Context, category *Category) error {
 }
 
 func (r Repository) Delete(ctx context.Context, id string) error {
+	const op = "Delete"
+
 	query := `
 		UPDATE categories
 		SET deleted_at = now(), active = false
@@ -165,9 +167,9 @@ func (r Repository) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
-			return fmt.Errorf("failed to delete category: %w", ErrDelete)
+			return ErrDelete
 		default:
-			return fmt.Errorf("failed to delete category: %w", err)
+			return postgres.ErrDoQuery(op, err)
 		}
 	}
 
@@ -175,6 +177,8 @@ func (r Repository) Delete(ctx context.Context, id string) error {
 }
 
 func (r Repository) GetByParentID(ctx context.Context, parentID string) ([]*Category, error) {
+	const op = "GetByParentID"
+
 	query := `
 		SELECT category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
 		FROM categories
@@ -184,7 +188,7 @@ func (r Repository) GetByParentID(ctx context.Context, parentID string) ([]*Cate
 
 	rows, err := r.client.Pool.Query(ctx, query, parentID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get categories by parent_id: %w", err)
+		return nil, postgres.ErrDoQuery(op, err)
 	}
 
 	for rows.Next() {
@@ -200,20 +204,22 @@ func (r Repository) GetByParentID(ctx context.Context, parentID string) ([]*Cate
 			&category.DeletedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan rows: %w", err)
+			return nil, postgres.ErrScan(op, err)
 		}
 
 		categories = append(categories, &category)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("received rows error: %w", err)
+		return nil, postgres.ErrReadRows(op, err)
 	}
 
 	return categories, nil
 }
 
 func (r Repository) GetPaginated(ctx context.Context, categoryName string, filters data.Filters) ([]*Category, data.Metadata, error) {
+	const op = "GetPaginated"
+
 	query := fmt.Sprintf(`
 		SELECT count(*) OVER(), category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
 		FROM categories
@@ -225,7 +231,7 @@ func (r Repository) GetPaginated(ctx context.Context, categoryName string, filte
 
 	rows, err := r.client.Pool.Query(ctx, query, args...)
 	if err != nil {
-		return nil, data.Metadata{}, fmt.Errorf("failed to get paginated: %w", err)
+		return nil, data.Metadata{}, postgres.ErrDoQuery(op, err)
 	}
 	defer rows.Close()
 
@@ -246,23 +252,25 @@ func (r Repository) GetPaginated(ctx context.Context, categoryName string, filte
 			&category.DeletedAt,
 		)
 		if err != nil {
-			return nil, data.Metadata{}, fmt.Errorf("failed to scan rows: %w", err)
+			return nil, data.Metadata{}, postgres.ErrScan(op, err)
 		}
 
 		categories = append(categories, &category)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, data.Metadata{}, fmt.Errorf("received rows error: %w", err)
+		return nil, data.Metadata{}, postgres.ErrReadRows(op, err)
 	}
 
 	// TODO implement it in service
-	metadate := data.CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
+	metadata := data.CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
 
-	return categories, metadate, nil
+	return categories, metadata, nil
 }
 
 func (r Repository) Restore(ctx context.Context, categoryID string) error {
+	const op = "Restore"
+
 	query := `
 		UPDATE categories
 		SET deleted_at = NULL, active = true
@@ -270,12 +278,12 @@ func (r Repository) Restore(ctx context.Context, categoryID string) error {
 
 	result, err := r.client.Pool.Exec(ctx, query, categoryID)
 	if err != nil {
-		return fmt.Errorf("failed to restore category: %w", err)
+		return postgres.ErrExec(op, err)
 	}
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		return fmt.Errorf("failed to restore category: %w", ErrNotFound)
+		return ErrNotFound
 	}
 
 	return nil
