@@ -18,7 +18,7 @@ func NewRepository(client postgres.Postgres) *Repository {
 	return &Repository{client: client}
 }
 
-func (r Repository) Create(ctx context.Context, category *Category) error {
+func (r *Repository) Create(ctx context.Context, category *Category) error {
 	const op = "Create"
 
 	query := `
@@ -47,7 +47,7 @@ func (r Repository) Create(ctx context.Context, category *Category) error {
 	return nil
 }
 
-func (r Repository) GetAll(ctx context.Context) ([]*Category, error) {
+func (r *Repository) GetAll(ctx context.Context) ([]*Category, error) {
 	const op = "GetAll"
 
 	query := `
@@ -89,13 +89,14 @@ func (r Repository) GetAll(ctx context.Context) ([]*Category, error) {
 	return categories, nil
 }
 
-func (r Repository) FindOne(ctx context.Context, id string) (*Category, error) {
+func (r *Repository) FindOne(ctx context.Context, id string) (*Category, error) {
 	const op = "FindOne"
 
 	query := `
 		SELECT category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
 		FROM categories
-		WHERE active = true AND category_id = $1`
+		WHERE active = true AND category_id = $1
+		LIMIT 1`
 
 	var category Category
 
@@ -122,7 +123,7 @@ func (r Repository) FindOne(ctx context.Context, id string) (*Category, error) {
 	return &category, nil
 }
 
-func (r Repository) Update(ctx context.Context, category *Category) error {
+func (r *Repository) Update(ctx context.Context, category *Category) error {
 	const op = "Update"
 
 	query := `
@@ -154,7 +155,7 @@ func (r Repository) Update(ctx context.Context, category *Category) error {
 	return nil
 }
 
-func (r Repository) Delete(ctx context.Context, id string) error {
+func (r *Repository) Delete(ctx context.Context, id string) error {
 	const op = "Delete"
 
 	query := `
@@ -176,7 +177,7 @@ func (r Repository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r Repository) GetByParentID(ctx context.Context, parentID string) ([]*Category, error) {
+func (r *Repository) GetByParentID(ctx context.Context, parentID string) ([]*Category, error) {
 	const op = "GetByParentID"
 
 	query := `
@@ -217,7 +218,7 @@ func (r Repository) GetByParentID(ctx context.Context, parentID string) ([]*Cate
 	return categories, nil
 }
 
-func (r Repository) GetPaginated(ctx context.Context, categoryName string, filters data.Filters) ([]*Category, data.Metadata, error) {
+func (r *Repository) GetPaginated(ctx context.Context, categoryName string, filters data.Filters) ([]*Category, data.Metadata, error) {
 	const op = "GetPaginated"
 
 	query := fmt.Sprintf(`
@@ -268,7 +269,7 @@ func (r Repository) GetPaginated(ctx context.Context, categoryName string, filte
 	return categories, metadata, nil
 }
 
-func (r Repository) Restore(ctx context.Context, categoryID string) error {
+func (r *Repository) Restore(ctx context.Context, categoryID string) error {
 	const op = "Restore"
 
 	query := `

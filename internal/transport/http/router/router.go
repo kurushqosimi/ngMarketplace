@@ -1,6 +1,11 @@
 package router
 
-import "github.com/gin-gonic/gin"
+import (
+	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
+)
 
 func NewRouter() *gin.Engine {
 	r := gin.Default()
@@ -10,4 +15,26 @@ func NewRouter() *gin.Engine {
 	})
 	// GET /api/categories/:id/attribute-schema
 	return r
+}
+
+func WriteJSON(ctx *gin.Context, status int, data interface{}, headers http.Header) error {
+	js, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		return err
+	}
+
+	js = append(js, '\n')
+
+	for key, value := range headers {
+		ctx.Header(key, strings.Join(value, ","))
+	}
+
+	ctx.Header("Content-Type", "application/json")
+
+	_, err = ctx.Writer.Write(js)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

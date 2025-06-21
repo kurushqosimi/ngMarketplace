@@ -3,6 +3,7 @@ package category
 import (
 	"context"
 	"ngMarketplace/pkg/data"
+	"strconv"
 )
 
 type Storage interface {
@@ -20,21 +21,26 @@ type Service struct {
 	Repository Repository
 }
 
-func NewService(repository Repository) *Service {
+func NewUseCase(repository Repository) *Service {
 	return &Service{Repository: repository}
 }
 
-func (u Service) Create() {
+func (s *Service) Create() {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u Service) ListAll() {
+func (s *Service) ListAll() {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (u Service) GetTree() {
+func (s *Service) GetTree() {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (s *Service) GetCategory(ctx context.Context, categoryID int64) (*Category, error) {
+	categoryIDStr := strconv.Itoa(int(categoryID))
+	return s.Repository.FindOne(ctx, categoryIDStr)
 }
