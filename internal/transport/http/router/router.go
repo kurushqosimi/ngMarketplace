@@ -31,6 +31,7 @@ func WriteJSON(ctx *gin.Context, status int, data interface{}, headers http.Head
 
 	ctx.Header("Content-Type", "application/json")
 
+	ctx.Writer.WriteHeader(status)
 	_, err = ctx.Writer.Write(js)
 	if err != nil {
 		return err

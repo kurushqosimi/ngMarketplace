@@ -25,7 +25,7 @@ func NewUseCase(repository Repository) *Service {
 	return &Service{Repository: repository}
 }
 
-func (s *Service) Create() {
+func (s *Service) Create(ctx context.Context, category *Category) {
 	//TODO implement me
 	panic("implement me")
 }

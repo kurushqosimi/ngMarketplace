@@ -1,11 +1,10 @@
-package category
+package apperror
 
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"ngMarketplace/internal/transport/http/router"
 )
-
-type envelope map[string]interface{}
 
 // ErrorResponse представляет собой стандартный формат ответа api
 type ErrorResponse struct {
@@ -36,6 +35,19 @@ var (
 	}
 )
 
-func WriteError(ctx *gin.Context, err *ErrorResponse) {
-	ctx.JSON(err.Status, envelope{"error-response": err})
+func WriteBadRequestError(ctx *gin.Context, err error, details string) {
+	errResp := &ErrorResponse{
+		Status:  http.StatusBadRequest,
+		Code:    "BAD_REQUEST",
+		Error:   err.Error(),
+		Details: details,
+	}
+	WriteError(ctx, errResp)
+}
+
+func WriteError(ctx *gin.Context, errResp *ErrorResponse) {
+	err := router.WriteJSON(ctx, errResp.Status, gin.H{"error-response": errResp}, nil)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error-response": errResp})
+	}
 }

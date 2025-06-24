@@ -11,6 +11,7 @@ DROP INDEX IF EXISTS idx_categories_deleted_at;
 DROP INDEX IF EXISTS idx_products_deleted_at;
 DROP INDEX IF EXISTS idx_products_product_name;
 DROP INDEX IF EXISTS idx_categories_name_search;
+DROP INDEX IF EXISTS idx_categories_language;
 
 -- Удаление триггеров
 DROP TRIGGER IF EXISTS update_product_variants_timestamp ON product_variants;

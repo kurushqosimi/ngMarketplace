@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"ngMarketplace/internal/apperror"
 	"ngMarketplace/internal/transport/http/router"
 	"ngMarketplace/pkg/logger"
 )
@@ -35,6 +36,7 @@ func NewHandler(usecase UseCase, logger logger.Logger) *Handler {
 
 func (h *Handler) Register(router *gin.Engine) {
 	router.GET(categoryURL, h.ShowCategoryHandler)
+	router.POST(categoriesURL, h.CreateCategoryHandler)
 }
 
 func (h *Handler) ShowCategoryHandler(ctx *gin.Context) {
@@ -43,7 +45,7 @@ func (h *Handler) ShowCategoryHandler(ctx *gin.Context) {
 	var req getCategoryRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		h.logger.Error("%s: ctx.ShouldBindUri: %v", op, err)
-		WriteError(ctx, ErrInvalidID)
+		apperror.WriteError(ctx, apperror.ErrInvalidID)
 		return
 	}
 
@@ -52,12 +54,35 @@ func (h *Handler) ShowCategoryHandler(ctx *gin.Context) {
 		h.logger.Error("%s: h.useCase.GetCategory: %v", op, err)
 		switch {
 		case errors.Is(err, ErrNotFound):
-			WriteError(ctx, ErrNotFound)
+			apperror.WriteError(ctx, apperror.ErrNotFound)
 		default:
-			WriteError(ctx, ErrInternal)
+			apperror.WriteError(ctx, apperror.ErrInternal)
 		}
 		return
 	}
 
-	err = router.WriteJSON(ctx, http.StatusOK)
+	err = router.WriteJSON(ctx, http.StatusOK, gin.H{"category": category}, nil)
+	if err != nil {
+		h.logger.Error("%s: router.WriteJSON: %v", op, err)
+		apperror.WriteError(ctx, apperror.ErrInternal)
+		return
+	}
+}
+
+func (h *Handler) CreateCategoryHandler(ctx *gin.Context) {
+	const op = "CreateCategoryHandler"
+
+	var req createCategoryRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("%s: ctx.ShouldBindJSON(&req): %v", op, err)
+		apperror.WriteBadRequestError(ctx, err, "Something is missing or was not sent correctly")
+		return
+	}
+
+	_ = &Category{
+		CategoryName:    req.CategoryName,
+		ParentID:        req.ParentID,
+		AttributeSchema: req.AttributeSchema,
+	}
+
 }
