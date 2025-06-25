@@ -44,6 +44,7 @@ type (
 	}
 )
 
+// New reads config either from config file either from environment
 func New() (*Config, error) {
 	cfg := &Config{}
 

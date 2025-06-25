@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// Logger — интерфейс, который мы хотим реализовать
+// Logger — interface that wraps the concrete implementation.
 type Logger interface {
 	Debug(message interface{}, args ...interface{})
 	Info(message string, args ...interface{})
@@ -32,7 +32,7 @@ const (
 	defaultLogFileCompress   = false
 )
 
-// New собирает все опции в LoggerOptions, создаёт единичный экземпляр CustomLogger (Singleton)
+// New collects all option in LoggerOptions, creates single CustomLogger (Singleton)
 func New(opts ...LoggerOption) *CustomLogger {
 	once.Do(func() {
 		config := &LoggerOptions{
@@ -78,9 +78,10 @@ func New(opts ...LoggerOption) *CustomLogger {
 	return instance
 }
 
-// LoggerOption — функция для модификации LoggerOptions
+// LoggerOption — function for modification LoggerOptions
 type LoggerOption func(options *LoggerOptions)
 
+// WithLevel - function that defines the log level
 func WithLevel(level string) LoggerOption {
 	return func(o *LoggerOptions) {
 		var l Level
@@ -92,42 +93,49 @@ func WithLevel(level string) LoggerOption {
 	}
 }
 
+// WithAddSource - function that adds the source of the log
 func WithAddSource(addSource bool) LoggerOption {
 	return func(o *LoggerOptions) {
 		o.AddSource = addSource
 	}
 }
 
+// WithIsJSON - function that defines that logs would be in JSON format
 func WithIsJSON(isJSON bool) LoggerOption {
 	return func(o *LoggerOptions) {
 		o.IsJSON = isJSON
 	}
 }
 
+// WithSetDefault - sets logger default
 func WithSetDefault(setDefault bool) LoggerOption {
 	return func(o *LoggerOptions) {
 		o.SetDefault = setDefault
 	}
 }
 
+// WithLogFilePath - sets where to save log file
 func WithLogFilePath(logFilePath string) LoggerOption {
 	return func(o *LoggerOptions) {
 		o.LogFilePath = logFilePath
 	}
 }
 
+// WithLogFileMaxSizeMB - sets the maximum file size of a log file
 func WithLogFileMaxSizeMB(maxSize int) LoggerOption {
 	return func(o *LoggerOptions) {
 		o.LogFileMaxSizeMB = maxSize
 	}
 }
 
+// WithLogFileMaxBackups - sets the number of maximum backups
 func WithLogFileMaxBackups(maxBackups int) LoggerOption {
 	return func(o *LoggerOptions) {
 		o.LogFileMaxBackups = maxBackups
 	}
 }
 
+// WithLogFileCompress - sets the compression
 func WithLogFileCompress(compression bool) LoggerOption {
 	return func(o *LoggerOptions) {
 		o.LogFileCompress = compression

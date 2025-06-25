@@ -8,12 +8,12 @@ import (
 	"os"
 )
 
-// Level чтоб в конфигурации и далее был тем же типом, что у zerolog
+// Level wrapper so that the custom logger level would be the same as a zerolog logger level
 type (
 	Level = zerolog.Level
 )
 
-// CustomLogger обёртка над zerolog.Logger
+// CustomLogger wrapper of zerolog.Logger
 type CustomLogger struct {
 	logger zerolog.Logger
 }
@@ -29,21 +29,20 @@ const (
 	NoLevel    = zerolog.NoLevel
 )
 
-// Эти переменные/функции могут пригодиться, чтобы настраивать глобальный уровень логгирования.
-// Например, если нужно переопределить уровень логирования во всей программе.
+// We need this variables/functions, so we can configure global level of logging.
 var (
 	SetGlobalLevel = zerolog.SetGlobalLevel
 
-	// ConsoleWriter удобный writer для красивого вывода в консоль.
+	// ConsoleWriter comfortable writer for beautiful console output.
 	ConsoleWriter = zerolog.ConsoleWriter{Out: os.Stderr}
 )
 
-// NewTextHandler Возвращает "текстовый" (ConsoleWriter) логгер, но можно и напрямую zerolog.New(ConsoleWriter).
+// NewTextHandler returns "text" (ConsoleWriter) logger.
 func NewTextHandler(w io.Writer) zerolog.Logger {
 	return zerolog.New(w).With().Timestamp().Logger()
 }
 
-// NewJSONHandler Возвращает "JSON" логгер
+// NewJSONHandler returns "JSON" logger.
 func NewJSONHandler(w io.Writer) zerolog.Logger {
 	if w == nil {
 		w = os.Stderr
@@ -52,7 +51,7 @@ func NewJSONHandler(w io.Writer) zerolog.Logger {
 
 }
 
-// NewFileWriter Настраивает `lumberjack.Logger` для ротации файлов
+// NewFileWriter configures `lumberjack.Logger` for file rotation.
 func NewFileWriter(config *LoggerOptions) io.Writer {
 	return &lumberjack.Logger{
 		Filename:   config.LogFilePath,
@@ -63,7 +62,7 @@ func NewFileWriter(config *LoggerOptions) io.Writer {
 	}
 }
 
-// Debug(message interface{}, args ...interface{})
+// Debug implements Debug log level with zerolog.
 func (l *CustomLogger) Debug(message interface{}, args ...interface{}) {
 	if len(args) == 0 {
 		l.logger.Debug().Msg(fmt.Sprintf("%v", message))
@@ -72,7 +71,7 @@ func (l *CustomLogger) Debug(message interface{}, args ...interface{}) {
 	}
 }
 
-// Info(message string, args ...interface{})
+// Info implements Info log level with zerolog.
 func (l *CustomLogger) Info(message string, args ...interface{}) {
 	if len(args) == 0 {
 		l.logger.Info().Msg(message)
@@ -81,7 +80,7 @@ func (l *CustomLogger) Info(message string, args ...interface{}) {
 	}
 }
 
-// Warn(message string, args ...interface{})
+// Warn implements Warn log level with zerolog.
 func (l *CustomLogger) Warn(message string, args ...interface{}) {
 	if len(args) == 0 {
 		l.logger.Warn().Msg(message)
@@ -90,7 +89,7 @@ func (l *CustomLogger) Warn(message string, args ...interface{}) {
 	}
 }
 
-// Error(message string, args ...interface{})
+// Error implements Error log level with zerolog.
 func (l *CustomLogger) Error(message string, args ...interface{}) {
 	if len(args) == 0 {
 		l.logger.Error().Msg(message)
@@ -99,7 +98,7 @@ func (l *CustomLogger) Error(message string, args ...interface{}) {
 	}
 }
 
-// Fatal(message string, args ...interface{})
+// Fatal implements Fatal log level with zerolog.
 func (l *CustomLogger) Fatal(message string, args ...interface{}) {
 	if len(args) == 0 {
 		l.logger.Fatal().Msg(message)
@@ -108,6 +107,7 @@ func (l *CustomLogger) Fatal(message string, args ...interface{}) {
 	}
 }
 
+// Printf implements Printf log level with zerolog.
 func (l *CustomLogger) Printf(message string, args ...interface{}) {
 	if len(args) == 0 {
 		l.logger.Print(message)

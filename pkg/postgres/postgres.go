@@ -16,12 +16,15 @@ const (
 	_defaultConnTimeout  = 1 * time.Second
 )
 
+// PostgresErr is a wrapper around pgconn.PgError for custom error formatting.
 type PostgresErr pgconn.PgError
 
+// Error - custom error function
 func (p *PostgresErr) Error() string {
 	return p.Severity + ": " + p.Message + " (SQLSTATE " + p.Code + ")"
 }
 
+// Postgres - wrapper to work with the db
 type Postgres struct {
 	maxPoolSize  int
 	connAttempts int
@@ -31,6 +34,9 @@ type Postgres struct {
 	Pool    *pgxpool.Pool
 }
 
+// New initializes a new Postgres instance with connection pooling.
+// It tries to connect up to connAttempts times with a timeout between attempts.
+// Returns an error if the connection cannot be established.
 func New(url string, opts ...Option) (*Postgres, error) {
 	pg := &Postgres{
 		maxPoolSize:  _defaultMaxPoolSize,
@@ -71,6 +77,7 @@ func New(url string, opts ...Option) (*Postgres, error) {
 	return pg, nil
 }
 
+// Close - closes connection to the database
 func (p *Postgres) Close() {
 	if p.Pool != nil {
 		p.Pool.Close()

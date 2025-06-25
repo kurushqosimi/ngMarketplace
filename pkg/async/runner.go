@@ -6,14 +6,17 @@ import (
 	"sync"
 )
 
+// BackgroundRunner structure that holds waitgroup to wait all background operation finish.
 type BackgroundRunner struct {
 	wg *sync.WaitGroup
 }
 
+// NewBackgroundRunner - returns BackgroundRunner to run background operation.
 func NewBackgroundRunner(wg *sync.WaitGroup) *BackgroundRunner {
 	return &BackgroundRunner{wg: wg}
 }
 
+// RunAsync - runs asynchronously any function without arguments.
 func (r *BackgroundRunner) RunAsync(fn func()) {
 	r.wg.Add(1)
 	go func() {

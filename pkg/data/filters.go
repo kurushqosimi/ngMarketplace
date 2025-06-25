@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Filters contains pagination and sorting options for list queries.
 type Filters struct {
 	Page         int
 	PageSize     int
@@ -13,6 +14,7 @@ type Filters struct {
 	SortSafeList []string
 }
 
+// Metadata holds pagination metadata returned to the client.
 type Metadata struct {
 	CurrentPage  int `json:"current_page,omitempty"`
 	PageSize     int `json:"page_size,omitempty"`
@@ -37,6 +39,7 @@ func CalculateMetadata(totalRecords, page, pageSize int) Metadata {
 	}
 }
 
+// ValidateFilters - filter validation.
 func ValidateFilters(v *validator.Validator, f Filters) {
 	v.Check(f.Page > 0, "page", "must be greater than zero")
 	v.Check(f.Page < 10_000_000, "page", "must be a maximum of 10 million")
@@ -58,8 +61,7 @@ func (f Filters) SortColumn() string {
 	panic("unsafe sort parameter: " + f.Sort)
 }
 
-// SortDirection Return the sort direction ("ASC" or "DESC") depending on the prefix character of the
-// Sort field
+// SortDirection Return the sort direction ("ASC" or "DESC") depending on the prefix character of the Sort field
 func (f Filters) SortDirection() string {
 	if strings.HasPrefix(f.Sort, "-") {
 		return "DESC"
@@ -68,10 +70,12 @@ func (f Filters) SortDirection() string {
 	return "ASC"
 }
 
+// Limit - returns limit.
 func (f Filters) Limit() int {
 	return f.PageSize
 }
 
+// Offset - returns offset.
 func (f Filters) Offset() int {
 	return (f.Page - 1) * f.PageSize
 }

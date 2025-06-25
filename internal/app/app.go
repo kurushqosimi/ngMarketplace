@@ -28,6 +28,7 @@ type App struct {
 	pg         *postgres.Postgres
 }
 
+// New collects everything needed to start the app
 func New(cfg *config.Config) (*App, error) {
 	var a = &App{
 		wg: sync.WaitGroup{},
