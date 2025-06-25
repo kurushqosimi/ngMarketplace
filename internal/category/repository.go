@@ -22,13 +22,14 @@ func (r *Repository) Create(ctx context.Context, category *Category) error {
 	const op = "Create"
 
 	query := `
-		INSERT INTO categories (category_name, parent_id, attribute_schema)
-		VALUES ($1, $2, $3)
+		INSERT INTO categories (category_name, parent_id, language,attribute_schema)
+		VALUES ($1, $2, $3, $4)
 		RETURNING category_id, created_at, active`
 
 	args := []interface{}{
 		category.CategoryName,
 		category.ParentID,
+		category.Language,
 		category.AttributeSchema,
 	}
 
@@ -41,6 +42,23 @@ func (r *Repository) Create(ctx context.Context, category *Category) error {
 		&category.CreatedAt,
 		&category.Active,
 	); err != nil {
+		if postgres.IsPgErr(err) {
+			err = postgres.Conv2CustomErr(err)
+		}
+
+		var pgErr *postgres.PostgresErr
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case "23505":
+				return postgres.ErrDoQuery(op, ErrDuplicateCategory)
+			case "23503":
+				return postgres.ErrDoQuery(op, ErrInvalidParentID)
+			case "08000", "08001", "08003", "08006":
+				return postgres.ErrDoQuery(op, ErrConnectionFailed)
+			default:
+				return postgres.ErrDoQuery(op, fmt.Errorf("unexpected database error: %w", err))
+			}
+		}
 		return postgres.ErrDoQuery(op, err)
 	}
 
@@ -155,7 +173,7 @@ func (r *Repository) Update(ctx context.Context, category *Category) error {
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, id string) error {
+func (r *Repository) SoftDelete(ctx context.Context, id string) error {
 	const op = "Delete"
 
 	query := `

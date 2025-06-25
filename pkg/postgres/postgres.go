@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -17,11 +18,36 @@ const (
 )
 
 // PostgresErr is a wrapper around pgconn.PgError for custom error formatting.
-type PostgresErr pgconn.PgError
+type PostgresErr struct {
+	*pgconn.PgError
+}
+
+func IsPgErr(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr)
+}
+
+func Conv2CustomErr(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return &PostgresErr{PgError: pgErr}
+	}
+	return fmt.Errorf("failed to conv: %w", err) // never likely to happen
+}
 
 // Error - custom error function
 func (p *PostgresErr) Error() string {
-	return p.Severity + ": " + p.Message + " (SQLSTATE " + p.Code + ")"
+	if p.PgError == nil {
+		return "unknown postgres error"
+	}
+	msg := p.Severity + ": " + p.Message + " (SQLSTATE " + p.Code + ")"
+	if p.Detail != "" {
+		msg += ", Detail: " + p.Detail
+	}
+	if p.Hint != "" {
+		msg += ", Hint: " + p.Hint
+	}
+	return msg
 }
 
 // Postgres - wrapper to work with the db

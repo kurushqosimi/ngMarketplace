@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"ngMarketplace/config"
+	"ngMarketplace/internal/category"
 	"ngMarketplace/internal/transport/http/router"
 	"ngMarketplace/pkg/logger"
 	"ngMarketplace/pkg/postgres"
@@ -47,7 +48,12 @@ func New(cfg *config.Config) (*App, error) {
 
 	//runner := async.NewBackgroundRunner(&a.wg)
 
+	categoryRepo := category.NewRepository(*pg)
+	categoryUseCase := category.NewUseCase(*categoryRepo)
+	categoryHandler := category.NewHandler(categoryUseCase, l)
+
 	router := router.NewRouter()
+	categoryHandler.Register(router)
 
 	a.cfg = cfg
 	a.router = router

@@ -8,6 +8,7 @@ type getCategoryRequest struct {
 
 type createCategoryRequest struct {
 	CategoryName    string          `json:"category_name" binding:"required"`
-	ParentID        int             `json:"parent_id"`
+	ParentID        *int            `json:"parent_id"`
+	Language        string          `json:"language" binding:"required,oneof=tj ru en"`
 	AttributeSchema json.RawMessage `json:"attribute_schema"`
 }

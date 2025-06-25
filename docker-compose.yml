@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   postgres:
     image: postgres:17.2-alpine3.21
@@ -6,6 +5,10 @@ services:
       - POSTGRES_USER=marketplace
       - POSTGRES_PASSWORD=marketplace
       - POSTGRES_DB=marketplace_db
+#    volumes: #if you want persistent data uncomment it
+#      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   api:
     build:
@@ -17,5 +20,8 @@ services:
       - DB_SOURCE=postgres://marketplace:marketplace@postgres:5432/marketplace_db?sslmode=disable
     depends_on:
       - postgres
-    entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
-    command: ["/app/main"]
+    entrypoint: [ "/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh" ]
+    command: [ "/app/main" ]
+
+#volumes: #if you want persistent data uncomment it
+#  postgres_data:

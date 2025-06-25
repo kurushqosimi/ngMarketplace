@@ -1,13 +1,33 @@
 package validator
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
 
 var (
 	EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
+// Validator - holds the map that consists of validation errors.
 type Validator struct {
-	Errors map[string]string
+	Errors Errors
+}
+
+type Errors map[string]string
+
+func (e Errors) Error() string {
+	if len(e) == 0 {
+		return ""
+	}
+
+	var errorMessages []string
+	for key, val := range e {
+		errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", key, val))
+	}
+
+	return strings.Join(errorMessages, " ")
 }
 
 // New is a helper which creates a new Validator instance with an empty errors map

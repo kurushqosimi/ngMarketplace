@@ -14,27 +14,6 @@ type ErrorResponse struct {
 	Details string `json:"details"`
 }
 
-var (
-	ErrInvalidID = &ErrorResponse{
-		Status:  http.StatusBadRequest,
-		Code:    "INVALID_ID",
-		Error:   "Invalid ID parameter",
-		Details: "The provided ID is invalid or malformed",
-	}
-	ErrNotFound = &ErrorResponse{
-		Status:  http.StatusNotFound,
-		Code:    "NOT_FOUND",
-		Error:   "Resource not found",
-		Details: "The requested resource was not found",
-	}
-	ErrInternal = &ErrorResponse{
-		Status:  http.StatusInternalServerError,
-		Code:    "INTERNAL_ERROR",
-		Error:   "Internal server error",
-		Details: "An unexpected error occurred",
-	}
-)
-
 func WriteBadRequestError(ctx *gin.Context, err error, details string) {
 	errResp := &ErrorResponse{
 		Status:  http.StatusBadRequest,
@@ -42,10 +21,26 @@ func WriteBadRequestError(ctx *gin.Context, err error, details string) {
 		Error:   err.Error(),
 		Details: details,
 	}
-	WriteError(ctx, errResp)
+
+	writeError(ctx, errResp)
 }
 
-func WriteError(ctx *gin.Context, errResp *ErrorResponse) {
+func WriteInternalServerError(ctx *gin.Context, err error, details string) {
+	errResp := &ErrorResponse{
+		Status:  http.StatusInternalServerError,
+		Code:    "INTERNAL_ERROR",
+		Error:   err.Error(),
+		Details: "faced an unexpected error",
+	}
+
+	if details != "" {
+		errResp.Details = details
+	}
+
+	writeError(ctx, errResp)
+}
+
+func writeError(ctx *gin.Context, errResp *ErrorResponse) {
 	err := router.WriteJSON(ctx, errResp.Status, gin.H{"error-response": errResp}, nil)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error-response": errResp})

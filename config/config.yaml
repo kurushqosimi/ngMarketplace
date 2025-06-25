@@ -9,8 +9,8 @@
     cors:
       debug: true
       allowed-methods: [ "GET", "POST", "PATCH", "PUT", "OPTIONS", "DELETE" ]
-      allowed-origins: [ "*" ]
-      allow-credentials: true
+      allowed-origins: [ "*" ] # in production change to exact domen
+      allow-credentials: true # in production change to true
       allowed-headers:
         - "Authorization"
         - "Location"
@@ -33,4 +33,4 @@
 
   postgres:
     pool_max: 2
-    db_source: postgres://marketplace:marketplace@localhost:5432/marketplace_ng
+    db_source: postgres://marketplace:marketplace@localhost:5432/marketplace_db
