@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
@@ -51,6 +52,10 @@ func (p *PostgresErr) Error() string {
 	}
 	return msg
 }
+
+var (
+	ErrNoRows = pgx.ErrNoRows
+)
 
 // Postgres - wrapper to work with the db
 type Postgres struct {

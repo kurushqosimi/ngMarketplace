@@ -19,7 +19,7 @@ type Category struct {
 	CreatedAt       time.Time       `json:"-"`
 	Active          bool            `json:"-"`
 	UpdatedAt       time.Time       `json:"-"`
-	DeletedAt       time.Time       `json:"-"`
+	DeletedAt       *time.Time      `json:"-"`
 }
 
 func validateCategory(v *validator.Validator, category *Category) {
@@ -60,9 +60,8 @@ func validateProperties(fields *parser.Fields) error {
 }
 
 var (
-	ErrUpdate   = errors.New("no active category to update")
-	ErrDelete   = errors.New("no active category to delete")
-	ErrNotFound = errors.New("category not found")
+	ErrUpdate = errors.New("no active category to update")
+	ErrDelete = errors.New("no active category to delete")
 )
 
 // Repository Errors
@@ -70,14 +69,16 @@ var (
 	ErrDuplicateCategory = errors.New("category already exists")
 	ErrInvalidParentID   = errors.New("parent category does not exist")
 	ErrConnectionFailed  = errors.New("database connection failed")
+	ErrNotFound          = errors.New("category not found")
 )
 
 // Service Errors
 var (
-	ErrInvalid = errors.New("validation failed")
+	ErrValidationFailed = errors.New("validation failed")
 )
 
 // Handler Errors
 var (
-	ErrBindJSON = errors.New("failed binding json")
+	ErrBindJSON  = errors.New("failed binding json")
+	ErrInvalidID = errors.New("invalid category id was sent")
 )

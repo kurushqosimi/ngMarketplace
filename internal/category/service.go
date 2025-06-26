@@ -10,8 +10,8 @@ import (
 
 type Storage interface {
 	Create(ctx context.Context, category *Category) error
+	GetByID(ctx context.Context, id string) (*Category, error)
 	GetAll(ctx context.Context) ([]*Category, error)
-	FindOne(ctx context.Context, id string) (*Category, error)
 	Update(ctx context.Context, category *Category) error
 	SoftDelete(ctx context.Context, id string) error
 	GetByParentID(ctx context.Context, parentID string) ([]*Category, error)
@@ -31,7 +31,7 @@ func (s *Service) Create(ctx context.Context, category *Category) error {
 	v := validator.New()
 
 	if validateCategory(v, category); !v.Valid() {
-		return fmt.Errorf("%w: %w", v.Errors, ErrInvalid)
+		return fmt.Errorf("%w: %w", v.Errors, ErrValidationFailed)
 	}
 
 	if err := s.Repository.Create(ctx, category); err != nil {
@@ -43,5 +43,5 @@ func (s *Service) Create(ctx context.Context, category *Category) error {
 
 func (s *Service) GetCategory(ctx context.Context, categoryID int64) (*Category, error) {
 	categoryIDStr := strconv.Itoa(int(categoryID))
-	return s.Repository.FindOne(ctx, categoryIDStr)
+	return s.Repository.GetByID(ctx, categoryIDStr)
 }

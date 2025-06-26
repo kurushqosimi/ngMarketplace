@@ -51,6 +51,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServiceUnavailableResponse'
 
+  /categories/:id:
+    get:
+      tags:
+        - Categories
+      summary: Get a category
+      description: Gets a category with the provided category_id
+      responses:
+        '200':
+          description: Get category successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+
+        '400':
+          description: Invalid type of id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrCategoryBindResponse'
+
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrCategoryNotFound"
+
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerErrorResponse'
+
 components:
   schemas:
     CreateCategoryRequest:
@@ -72,7 +107,7 @@ components:
         language:
           type: string
           description: Language of the category
-          enum: [tj, ru, en]
+          enum: [ tj, ru, en ]
           example: ru
         attribute_schema:
           type: object
@@ -81,7 +116,7 @@ components:
             "type": "object",
             "title": "Электроника",
             "description": "Атрибуты для категории электроники",
-            "required": ["гарантия", "бренд"],
+            "required": [ "гарантия", "бренд" ],
             "properties": {
               "гарантия": {
                 "type": "integer",
@@ -91,7 +126,7 @@ components:
               },
               "бренд": {
                 "type": "string",
-                "enum": ["Samsung", "Apple", "Xiaomi", "Другое"]
+                "enum": [ "Samsung", "Apple", "Xiaomi", "Другое" ]
               }
             }
           }
@@ -122,7 +157,7 @@ components:
                 "type": "object",
                 "title": "Электроника",
                 "description": "Атрибуты для категории электроники",
-                "required": ["гарантия", "бренд"],
+                "required": [ "гарантия", "бренд" ],
                 "properties": {
                   "гарантия": {
                     "type": "integer",
@@ -132,7 +167,7 @@ components:
                   },
                   "бренд": {
                     "type": "string",
-                    "enum": ["Samsung", "Apple", "Xiaomi", "Другое"]
+                    "enum": [ "Samsung", "Apple", "Xiaomi", "Другое" ]
                   }
                 }
               }
@@ -155,7 +190,7 @@ components:
             details:
               type: string
               example: Something is missing or was not sent correctly
-              
+
     ConflictResponse:
       type: object
       properties:
@@ -193,7 +228,7 @@ components:
             details:
               type: string
               example: internal server error
-              
+
     ServiceUnavailableResponse:
       type: object
       properties:
@@ -209,6 +244,44 @@ components:
             error:
               type: string
               example: database connection failed
-            detailes:
+            details:
               type: string
               example: Database connection failed
+
+    ErrCategoryBindResponse:
+      type: object
+      properties:
+        error-response:
+          type: object
+          properties:
+            status:
+              type: integer
+              example: 400
+            code:
+              type: string
+              example: BAD_REQUEST
+            error:
+              type: string
+              example: invalid category id was sent
+            details:
+              type: string
+              example: Provide correct category id
+
+    ErrCategoryNotFound:
+      type: object
+      properties:
+        error-response:
+          type: object
+          properties:
+            status:
+              type: integer
+              example: 404
+            code:
+              type: string
+              example: NOT_FOUND
+            error:
+              type: string
+              example: category not found
+            details:
+              type: string
+              example: Category you are seeking does not exist

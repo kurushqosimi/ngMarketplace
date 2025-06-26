@@ -22,9 +22,12 @@ func (r *Repository) Create(ctx context.Context, category *Category) error {
 	const op = "Create"
 
 	query := `
-		INSERT INTO categories (category_name, parent_id, language,attribute_schema)
-		VALUES ($1, $2, $3, $4)
-		RETURNING category_id, created_at, active`
+		INSERT INTO 
+		    categories (category_name, parent_id, language,attribute_schema)
+		VALUES (
+		        $1, $2, $3, $4)
+		RETURNING 
+			category_id, created_at, active`
 
 	args := []interface{}{
 		category.CategoryName,
@@ -65,13 +68,56 @@ func (r *Repository) Create(ctx context.Context, category *Category) error {
 	return nil
 }
 
+func (r *Repository) GetByID(ctx context.Context, id string) (*Category, error) {
+	const op = "FindOne"
+
+	query := `
+		SELECT 
+		    category_id, category_name, parent_id, language, attribute_schema, created_at, active, updated_at, deleted_at
+		FROM 
+		    categories
+		WHERE 
+		    active = true 
+		AND 
+			category_id = $1
+		LIMIT 1`
+
+	var category Category
+
+	if err := r.client.Pool.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&category.CategoryID,
+		&category.CategoryName,
+		&category.ParentID,
+		&category.Language,
+		&category.AttributeSchema,
+		&category.CreatedAt,
+		&category.Active,
+		&category.UpdatedAt,
+		&category.DeletedAt,
+	); err != nil {
+		if errors.Is(err, postgres.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, postgres.ErrDoQuery(op, err)
+	}
+
+	return &category, nil
+}
+
 func (r *Repository) GetAll(ctx context.Context) ([]*Category, error) {
 	const op = "GetAll"
 
 	query := `
-		SELECT category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
-		FROM categories
-		WHERE active = true`
+		SELECT 
+		    category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
+		FROM 
+		    categories
+		WHERE 
+		    active = true`
 
 	rows, err := r.client.Pool.Query(ctx, query)
 	if err != nil {
@@ -105,40 +151,6 @@ func (r *Repository) GetAll(ctx context.Context) ([]*Category, error) {
 	}
 
 	return categories, nil
-}
-
-func (r *Repository) FindOne(ctx context.Context, id string) (*Category, error) {
-	const op = "FindOne"
-
-	query := `
-		SELECT category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
-		FROM categories
-		WHERE active = true AND category_id = $1
-		LIMIT 1`
-
-	var category Category
-
-	if err := r.client.Pool.QueryRow(
-		ctx,
-		query,
-		id,
-	).Scan(
-		&category.CategoryID,
-		&category.CategoryName,
-		&category.ParentID,
-		&category.AttributeSchema,
-		&category.CreatedAt,
-		&category.Active,
-		&category.UpdatedAt,
-		&category.DeletedAt,
-	); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
-		}
-		return nil, postgres.ErrDoQuery(op, err)
-	}
-
-	return &category, nil
 }
 
 func (r *Repository) Update(ctx context.Context, category *Category) error {
