@@ -6,7 +6,15 @@ import (
 	"ngMarketplace/internal/transport/http/router"
 )
 
-// ErrorResponse представляет собой стандартный формат ответа api
+// Codes for error response
+var (
+	badRequestCode         = "BAD_REQUEST"
+	conflictCode           = "CONFLICT"
+	serviceUnavailableCode = "SERVICE_UNAVAILABLE"
+	serverErrorCode        = "INTERNAL_SERVER_ERROR"
+)
+
+// ErrorResponse represents the error response structure
 type ErrorResponse struct {
 	Status  int    `json:"status"`
 	Code    string `json:"code"`
@@ -14,10 +22,14 @@ type ErrorResponse struct {
 	Details string `json:"details"`
 }
 
-func WriteBadRequestError(ctx *gin.Context, err error, details string) {
+func WriteBadRequestResponse(ctx *gin.Context, err error, details string) {
+	if details == "" {
+		details = "Something wrong you have sent"
+	}
+
 	errResp := &ErrorResponse{
 		Status:  http.StatusBadRequest,
-		Code:    "BAD_REQUEST",
+		Code:    badRequestCode,
 		Error:   err.Error(),
 		Details: details,
 	}
@@ -25,16 +37,34 @@ func WriteBadRequestError(ctx *gin.Context, err error, details string) {
 	writeError(ctx, errResp)
 }
 
-func WriteInternalServerError(ctx *gin.Context, err error, details string) {
+func WriteConflictResponse(ctx *gin.Context, err error, details string) {
 	errResp := &ErrorResponse{
-		Status:  http.StatusInternalServerError,
-		Code:    "INTERNAL_ERROR",
+		Status:  http.StatusConflict,
+		Code:    conflictCode,
 		Error:   err.Error(),
-		Details: "faced an unexpected error",
+		Details: details,
 	}
 
-	if details != "" {
-		errResp.Details = details
+	writeError(ctx, errResp)
+}
+
+func WriteSrvUnResponse(ctx *gin.Context, err error, details string) {
+	errResp := &ErrorResponse{
+		Status:  http.StatusServiceUnavailable,
+		Code:    serviceUnavailableCode,
+		Error:   err.Error(),
+		Details: details,
+	}
+
+	writeError(ctx, errResp)
+}
+
+func WriteInternalErrResponse(ctx *gin.Context, err error, details string) {
+	errResp := &ErrorResponse{
+		Status:  http.StatusInternalServerError,
+		Code:    serverErrorCode,
+		Error:   err.Error(),
+		Details: details,
 	}
 
 	writeError(ctx, errResp)

@@ -1,0 +1,214 @@
+openapi: 3.0.0
+info:
+  title: Marketplace API
+  description: API for managing marketplace categories
+  version: 1.0.0
+servers:
+  - url: http://0.0.0.0:8081
+    description: Local development server
+paths:
+  /categories:
+    post:
+      tags:
+        - Categories
+      summary: Create a new category
+      description: Creates a new category in the marketplace with the given attributes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '409':
+          description: Conflict - Category already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceUnavailableResponse'
+
+components:
+  schemas:
+    CreateCategoryRequest:
+      type: object
+      required:
+        - category_name
+        - language
+      properties:
+        category_name:
+          type: string
+          description: Name of the category
+          example: Электроника
+          maxLength: 50
+        parent_id:
+          type: integer
+          nullable: true
+          description: ID of the parent category (if any)
+          example: 1
+        language:
+          type: string
+          description: Language of the category
+          enum: [tj, ru, en]
+          example: ru
+        attribute_schema:
+          type: object
+          description: JSON schema for category attributes
+          example: {
+            "type": "object",
+            "title": "Электроника",
+            "description": "Атрибуты для категории электроники",
+            "required": ["гарантия", "бренд"],
+            "properties": {
+              "гарантия": {
+                "type": "integer",
+                "description": "Срок гарантии в месяцах",
+                "minimum": 0,
+                "maximum": 60
+              },
+              "бренд": {
+                "type": "string",
+                "enum": ["Samsung", "Apple", "Xiaomi", "Другое"]
+              }
+            }
+          }
+    
+    CategoryResponse:
+      type: object
+      properties:
+        category:
+          type: object
+          properties:
+            category_id:
+              type: integer
+              description: Auto-generated ID of the category
+              example: 1
+            category_name:
+              type: string
+              example: Электроника
+            parent_id:
+              type: integer
+              nullable: true
+              example: null
+            language:
+              type: string
+              example: ru
+            attribute_schema:
+              type: object
+              example: {
+                "type": "object",
+                "title": "Электроника",
+                "description": "Атрибуты для категории электроники",
+                "required": ["гарантия", "бренд"],
+                "properties": {
+                  "гарантия": {
+                    "type": "integer",
+                    "description": "Срок гарантии в месяцах",
+                    "minimum": 0,
+                    "maximum": 60
+                  },
+                  "бренд": {
+                    "type": "string",
+                    "enum": ["Samsung", "Apple", "Xiaomi", "Другое"]
+                  }
+                }
+              }
+    
+    BadRequestResponse:
+      type: object
+      properties:
+        error-response:
+          type: object
+          properties:
+            status:
+              type: integer
+              example: 400
+            code:
+              type: string
+              example: BAD_REQUEST
+            error:
+              type: string
+              example: validation failed
+            details:
+              type: string
+              example: Something is missing or was not sent correctly
+              
+    ConflictResponse:
+      type: object
+      properties:
+        error-response:
+          type: object
+          properties:
+            status:
+              type: integer
+              example: 409
+            code:
+              type: string
+              example: CONFLICT
+            error:
+              type: string
+              example: category already exists
+            details:
+              type: string
+              example: Category with this name, parent, and language already exists
+    
+    InternalServerErrorResponse:
+      type: object
+      properties:
+        error-response:
+          type: object
+          properties:
+            status:
+              type: integer
+              example: 500
+            code:
+              type: string
+              example: INTERNAL_SERVER_ERROR
+            error:
+              type: string
+              example: any unexpected error
+            details:
+              type: string
+              example: internal server error
+              
+    ServiceUnavailableResponse:
+      type: object
+      properties:
+        error-response:
+          type: object
+          properties:
+            status:
+              type: integer
+              example: 503
+            code:
+              type: string
+              example: SERVICE_UNAVAILABLE
+            error:
+              type: string
+              example: database connection failed
+            detailes:
+              type: string
+              example: Database connection failed

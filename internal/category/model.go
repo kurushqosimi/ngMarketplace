@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Category represents a category in the marketplace
 type Category struct {
 	CategoryID      int             `json:"category_id"`
 	CategoryName    string          `json:"category_name"`
@@ -28,6 +29,7 @@ func validateCategory(v *validator.Validator, category *Category) {
 		parsedInfo, err := parser.ExtractInformation(category.AttributeSchema)
 		if err != nil {
 			v.AddError("failed to extract information from attribute_schema", err.Error())
+			return
 		}
 		validateAttributeSchema(v, parsedInfo)
 	}
@@ -73,4 +75,9 @@ var (
 // Service Errors
 var (
 	ErrInvalid = errors.New("validation failed")
+)
+
+// Handler Errors
+var (
+	ErrBindJSON = errors.New("failed binding json")
 )

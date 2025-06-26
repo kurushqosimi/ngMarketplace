@@ -63,6 +63,7 @@ func New(cfg *config.Config) (*App, error) {
 	return a, nil
 }
 
+// Run start the application either by http, grpc or etc.
 func (a *App) Run(ctx context.Context) error {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

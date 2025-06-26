@@ -37,43 +37,14 @@ func (h *Handler) Register(router *gin.Engine) {
 	router.POST(categoriesURL, h.CreateCategoryHandler)
 }
 
-//func (h *Handler) ShowCategoryHandler(ctx *gin.Context) {
-//	const op = "GetCategoryHandler"
-//
-//	var req getCategoryRequest
-//	if err := ctx.ShouldBindUri(&req); err != nil {
-//		h.logger.Error("%s: ctx.ShouldBindUri: %v", op, err)
-//		apperror.WriteError(ctx, apperror.ErrInvalidID)
-//		return
-//	}
-//
-//	category, err := h.useCase.GetCategory(ctx, req.ID)
-//	if err != nil {
-//		h.logger.Error("%s: h.useCase.GetCategory: %v", op, err)
-//		switch {
-//		case errors.Is(err, ErrNotFound):
-//			apperror.WriteError(ctx, apperror.ErrNotFound)
-//		default:
-//			apperror.WriteError(ctx, apperror.ErrInternal)
-//		}
-//		return
-//	}
-//
-//	err = router.WriteJSON(ctx, http.StatusOK, gin.H{"category": category}, nil)
-//	if err != nil {
-//		h.logger.Error("%s: router.WriteJSON: %v", op, err)
-//		apperror.WriteError(ctx, apperror.ErrInternal)
-//		return
-//	}
-//}
-
+// CreateCategoryHandler creates a new category in the marketplace
 func (h *Handler) CreateCategoryHandler(ctx *gin.Context) {
 	const op = "CreateCategoryHandler"
 
 	var req createCategoryRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		h.logger.Error("%s: ctx.ShouldBindJSON: %v", op, err)
-		apperror.WriteBadRequestError(ctx, err, "Something is missing or was not sent correctly")
+		apperror.WriteBadRequestResponse(ctx, ErrBindJSON, "Something is missing or was not sent correctly")
 		return
 	}
 
@@ -89,15 +60,15 @@ func (h *Handler) CreateCategoryHandler(ctx *gin.Context) {
 		h.logger.Error("%s: h.useCase.Create: %v", op, err)
 		switch {
 		case errors.Is(err, ErrInvalid):
-			apperror.WriteBadRequestError(ctx, err, err.Error())
+			apperror.WriteBadRequestResponse(ctx, err, err.Error())
 		case errors.Is(err, ErrDuplicateCategory):
-			apperror.WriteBadRequestError(ctx, err, "Category with this name, parent, and language already exists")
+			apperror.WriteConflictResponse(ctx, err, "Category with this name, parent, and language already exists")
 		case errors.Is(err, ErrInvalidParentID):
-			apperror.WriteBadRequestError(ctx, err, "Parent category does not exists")
+			apperror.WriteBadRequestResponse(ctx, err, "Parent category does not exists")
 		case errors.Is(err, ErrConnectionFailed):
-			apperror.WriteInternalServerError(ctx, err, "Database connection failed")
+			apperror.WriteSrvUnResponse(ctx, err, "Database connection failed")
 		default:
-			apperror.WriteInternalServerError(ctx, err, "")
+			apperror.WriteInternalErrResponse(ctx, err, "internal server error")
 		}
 		return
 	}
@@ -105,7 +76,38 @@ func (h *Handler) CreateCategoryHandler(ctx *gin.Context) {
 	err = router.WriteJSON(ctx, http.StatusCreated, gin.H{"category": category}, nil)
 	if err != nil {
 		h.logger.Error("%s: router.WriteJSON: %v", op, err)
-		apperror.WriteInternalServerError(ctx, err, "")
+		ctx.JSON(http.StatusCreated, gin.H{"category": category})
 		return
 	}
 }
+
+//	func (h *Handler) ShowCategoryHandler(ctx *gin.Context) {
+//		const op = "GetCategoryHandler"
+//
+//		var req getCategoryRequest
+//		if err := ctx.ShouldBindUri(&req); err != nil {
+//			h.logger.Error("%s: ctx.ShouldBindUri: %v", op, err)
+//			apperror.WriteError(ctx, apperror.ErrInvalidID)
+//			return
+//		}
+//
+//		category, err := h.useCase.GetCategory(ctx, req.ID)
+//		if err != nil {
+//			h.logger.Error("%s: h.useCase.GetCategory: %v", op, err)
+//			switch {
+//			case errors.Is(err, ErrNotFound):
+//				apperror.WriteError(ctx, apperror.ErrNotFound)
+//			default:
+//				apperror.WriteError(ctx, apperror.ErrInternal)
+//			}
+//			return
+//		}
+//
+//		err = router.WriteJSON(ctx, http.StatusOK, gin.H{"category": category}, nil)
+//		if err != nil {
+//			h.logger.Error("%s: router.WriteJSON: %v", op, err)
+//			apperror.WriteError(ctx, apperror.ErrInternal)
+//			return
+//		}
+//	}
+//

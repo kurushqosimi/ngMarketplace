@@ -22,11 +22,13 @@ type PostgresErr struct {
 	*pgconn.PgError
 }
 
+// IsPgErr checks whether an error is pgx error
 func IsPgErr(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr)
 }
 
+// Conv2CustomErr coverts pgx error to out custom error
 func Conv2CustomErr(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
