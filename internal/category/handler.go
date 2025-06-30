@@ -186,7 +186,7 @@ func (h *Handler) deleteCategoryHandler(ctx *gin.Context) {
 	}
 }
 
-// ShowCategoriesHandler get categories
+// listCategoriesHandler get categories
 func (h *Handler) listCategoriesHandler(ctx *gin.Context) {
 	const op = "listCategoriesHandler"
 
