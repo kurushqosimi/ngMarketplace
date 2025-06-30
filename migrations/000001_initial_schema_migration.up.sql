@@ -131,7 +131,7 @@ CREATE INDEX idx_categories_deleted_at ON categories (deleted_at) WHERE deleted_
 CREATE INDEX idx_product_variants_deleted_at ON product_variants (deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX idx_products_active ON products (active);
 CREATE UNIQUE INDEX idx_categories_name_parent_lang ON categories (category_name, parent_id, language) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX idx_categories_languages ON categories (category_name, language) WHERE parent_id IS NULL;
+CREATE UNIQUE INDEX idx_categories_languages ON categories (category_name, language) WHERE parent_id IS NULL AND deleted_at IS NULL;
 CREATE INDEX idx_product_variants_product_id ON product_variants (product_id);
 CREATE INDEX idx_product_variants_attributes ON product_variants USING GIN (attributes);
 CREATE INDEX idx_products_category_id ON products (category_id);

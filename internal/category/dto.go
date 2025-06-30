@@ -1,7 +1,11 @@
 package category
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"ngMarketplace/internal/common"
+)
 
+// getCategoryRequest represents the param request for getting a category
 type getCategoryRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
@@ -12,4 +16,19 @@ type createCategoryRequest struct {
 	ParentID        *int            `json:"parent_id"`
 	Language        string          `json:"language" binding:"required,oneof=tj ru en"`
 	AttributeSchema json.RawMessage `json:"attribute_schema"`
+}
+
+// updateCategoryRequest represents the request body for updating a category
+type updateCategoryRequest struct {
+	CategoryName    *string         `json:"category_name"`
+	ParentID        *int            `json:"parent_id"`
+	Language        *string         `json:"language"`
+	AttributeSchema json.RawMessage `json:"attribute_schema"`
+}
+
+// getCategoriesRequest represents the request query for getting the list of categories
+type getCategoriesRequest struct {
+	CategoryName string `form:"category_name"`
+	Language     string `form:"language"`
+	common.Filters
 }

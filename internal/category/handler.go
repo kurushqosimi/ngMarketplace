@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"ngMarketplace/internal/apperror"
+	"ngMarketplace/internal/common"
 	"ngMarketplace/internal/transport/http/router"
 	"ngMarketplace/pkg/logger"
 )
@@ -18,6 +19,9 @@ const (
 type UseCase interface {
 	Create(ctx context.Context, category *Category) error
 	GetCategory(ctx context.Context, categoryID int64) (*Category, error)
+	UpdateCategory(ctx context.Context, categoryID int64, category *updateCategoryRequest) (*Category, error)
+	DeleteCategory(ctx context.Context, categoryID int64) error
+	GetCategories(ctx context.Context, filters getCategoriesRequest) ([]*Category, common.Metadata, error)
 }
 
 type Handler struct {
@@ -33,12 +37,15 @@ func NewHandler(useCase UseCase, logger logger.Logger) *Handler {
 }
 
 func (h *Handler) Register(router *gin.Engine) {
-	router.GET(categoryURL, h.ShowCategoryHandler)
-	router.POST(categoriesURL, h.CreateCategoryHandler)
+	router.GET(categoryURL, h.showCategoryHandler)
+	router.POST(categoriesURL, h.createCategoryHandler)
+	router.PATCH(categoryURL, h.updateCategoryHandler)
+	router.DELETE(categoryURL, h.deleteCategoryHandler)
+	router.GET(categoriesURL, h.listCategoriesHandler)
 }
 
 // CreateCategoryHandler creates a new category in the marketplace
-func (h *Handler) CreateCategoryHandler(ctx *gin.Context) {
+func (h *Handler) createCategoryHandler(ctx *gin.Context) {
 	const op = "CreateCategoryHandler"
 
 	var req createCategoryRequest
@@ -59,7 +66,7 @@ func (h *Handler) CreateCategoryHandler(ctx *gin.Context) {
 	if err != nil {
 		h.logger.Error("%s: h.useCase.Create: %v", op, err)
 		switch {
-		case errors.Is(err, ErrValidationFailed):
+		case errors.Is(err, ErrCategoryValidationFailed):
 			apperror.WriteBadRequestResponse(ctx, err, err.Error())
 		case errors.Is(err, ErrDuplicateCategory):
 			apperror.WriteConflictResponse(ctx, err, "Category with this name, parent, and language already exists")
@@ -73,8 +80,7 @@ func (h *Handler) CreateCategoryHandler(ctx *gin.Context) {
 		return
 	}
 
-	err = router.WriteJSON(ctx, http.StatusCreated, gin.H{"category": category}, nil)
-	if err != nil {
+	if err = router.WriteJSON(ctx, http.StatusCreated, gin.H{"category": category}, nil); err != nil {
 		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
 		ctx.JSON(http.StatusCreated, gin.H{"category": category})
 		return
@@ -82,7 +88,7 @@ func (h *Handler) CreateCategoryHandler(ctx *gin.Context) {
 }
 
 // ShowCategoryHandler gets category by id
-func (h *Handler) ShowCategoryHandler(ctx *gin.Context) {
+func (h *Handler) showCategoryHandler(ctx *gin.Context) {
 	const op = "GetCategoryHandler"
 
 	var req getCategoryRequest
@@ -104,10 +110,108 @@ func (h *Handler) ShowCategoryHandler(ctx *gin.Context) {
 		return
 	}
 
-	err = router.WriteJSON(ctx, http.StatusOK, gin.H{"category": category}, nil)
-	if err != nil {
+	if err = router.WriteJSON(ctx, http.StatusOK, gin.H{"category": category}, nil); err != nil {
 		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
 		ctx.JSON(http.StatusOK, gin.H{"category": category})
+		return
+	}
+}
+
+// updateCategoryHandler updates category by id
+func (h *Handler) updateCategoryHandler(ctx *gin.Context) {
+	const op = "updateCategoryHandler"
+
+	var req getCategoryRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		h.logger.Error("%s: ctx.ShouldBindUri: %v", op, err)
+		apperror.WriteBadRequestResponse(ctx, ErrInvalidID, "Provide correct category id")
+		return
+	}
+
+	var input updateCategoryRequest
+
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		h.logger.Error("%s: ctx.ShouldBindJSON: %v", op, err)
+		apperror.WriteBadRequestResponse(ctx, ErrBindJSON, "Something is missing or was not sent correctly")
+		return
+	}
+
+	category, err := h.useCase.UpdateCategory(ctx, req.ID, &input)
+	if err != nil {
+		h.logger.Error("%s: h.useCase.UpdateCategory: %v", op, err)
+		switch {
+		case errors.Is(err, ErrNotFound) || errors.Is(err, ErrNotFoundForUpdate):
+			apperror.WriteNotFoundResponse(ctx, err, "Category you are seeking to update does not exist")
+		case errors.Is(err, ErrCategoryValidationFailed):
+			apperror.WriteBadRequestResponse(ctx, err, err.Error())
+		default:
+			apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")
+		}
+		return
+	}
+
+	if err = router.WriteJSON(ctx, http.StatusOK, gin.H{"category": category}, nil); err != nil {
+		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
+		ctx.JSON(http.StatusOK, gin.H{"category": category})
+		return
+	}
+}
+
+// deleteCategoryHandler deletes category by id
+func (h *Handler) deleteCategoryHandler(ctx *gin.Context) {
+	const op = "deleteCategoryHandler"
+
+	var req getCategoryRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		h.logger.Error("%s: ctx.ShouldBindUri: %v", op, err)
+		apperror.WriteBadRequestResponse(ctx, ErrInvalidID, "Provide correct category id")
+		return
+	}
+
+	if err := h.useCase.DeleteCategory(ctx, req.ID); err != nil {
+		h.logger.Error("%s: h.useCase.DeleteCategory: %v", op, err)
+		switch {
+		case errors.Is(err, ErrNotFoundForDelete):
+			apperror.WriteNotFoundResponse(ctx, err, "Category you are seeking to delete does not exist")
+		default:
+			apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")
+		}
+		return
+	}
+
+	if err := router.WriteJSON(ctx, http.StatusOK, gin.H{"message": "category was successfully deleted"}, nil); err != nil {
+		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
+		ctx.JSON(http.StatusOK, gin.H{"message": "category was successfully deleted"})
+		return
+	}
+}
+
+// ShowCategoriesHandler get categories
+func (h *Handler) listCategoriesHandler(ctx *gin.Context) {
+	const op = "listCategoriesHandler"
+
+	var req getCategoriesRequest
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		h.logger.Error("%s: ctx.ShouldBindQuery: %v", op, err)
+		apperror.WriteBadRequestResponse(ctx, err, "some filter was sent with incorrect type")
+		return
+	}
+
+	categories, metadata, err := h.useCase.GetCategories(ctx, req)
+	if err != nil {
+		switch {
+		case errors.Is(err, common.ErrFilterValidationFailed):
+			apperror.WriteBadRequestResponse(ctx, err, "check filter parameters")
+		default:
+			apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")
+		}
+		return
+	}
+
+	if err := router.WriteJSON(ctx, http.StatusOK, gin.H{"categories": categories, "metadata": metadata}, nil); err != nil {
+		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
+		ctx.JSON(http.StatusOK, gin.H{"categories": categories, "metadata": metadata})
 		return
 	}
 }

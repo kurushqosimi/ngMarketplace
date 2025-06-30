@@ -24,6 +24,7 @@ type Category struct {
 
 func validateCategory(v *validator.Validator, category *Category) {
 	v.Check(len(category.CategoryName) <= 50, "category_name", "must not be more than 50 bytes long")
+	v.Check(validator.In(category.Language, "tj", "ru", "en"), "category_language", "must be tj, ru, or en")
 
 	if len(category.AttributeSchema) > 0 {
 		parsedInfo, err := parser.ExtractInformation(category.AttributeSchema)
@@ -59,26 +60,24 @@ func validateProperties(fields *parser.Fields) error {
 	return nil
 }
 
-var (
-	ErrUpdate = errors.New("no active category to update")
-	ErrDelete = errors.New("no active category to delete")
-)
-
 // Repository Errors
 var (
 	ErrDuplicateCategory = errors.New("category already exists")
 	ErrInvalidParentID   = errors.New("parent category does not exist")
 	ErrConnectionFailed  = errors.New("database connection failed")
 	ErrNotFound          = errors.New("category not found")
+	ErrNotFoundForUpdate = errors.New("no active category to update")
+	ErrNotFoundForDelete = errors.New("no active category to delete")
 )
 
 // Service Errors
 var (
-	ErrValidationFailed = errors.New("validation failed")
+	ErrCategoryValidationFailed = errors.New("category validation failed")
 )
 
 // Handler Errors
 var (
-	ErrBindJSON  = errors.New("failed binding json")
-	ErrInvalidID = errors.New("invalid category id was sent")
+	ErrBindJSON    = errors.New("failed binding json")
+	ErrInvalidID   = errors.New("invalid category id was sent")
+	ErrFailedQuery = errors.New("failed to parse query")
 )

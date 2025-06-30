@@ -1,20 +1,25 @@
-package data
+package common
 
 import (
+	"errors"
 	"math"
 	"ngMarketplace/pkg/validator"
 	"strings"
 )
 
-// Filters contains pagination and sorting options for list queries.
+var (
+	ErrFilterValidationFailed = errors.New("filters validation failed")
+)
+
+// Filters holds information for pagination
 type Filters struct {
-	Page         int
-	PageSize     int
-	Sort         string
+	Page         int    `form:"page"`
+	PageSize     int    `form:"page_size"`
+	Sort         string `form:"sort"`
 	SortSafeList []string
 }
 
-// Metadata holds pagination metadata returned to the client.
+// Metadata holds information about current pagination
 type Metadata struct {
 	CurrentPage  int `json:"current_page,omitempty"`
 	PageSize     int `json:"page_size,omitempty"`
@@ -23,8 +28,7 @@ type Metadata struct {
 	TotalRecords int `json:"total_records,omitempty"`
 }
 
-// CalculateMetadata The CalculateMetadata() function calculates the appropriate pagination metadata
-// values given the total number of records, current page, and page size values.
+// CalculateMetadata calculates metadata for response
 func CalculateMetadata(totalRecords, page, pageSize int) Metadata {
 	if totalRecords == 0 {
 		return Metadata{}
@@ -39,7 +43,7 @@ func CalculateMetadata(totalRecords, page, pageSize int) Metadata {
 	}
 }
 
-// ValidateFilters - filter validation.
+// ValidateFilters checks the fields of Filters
 func ValidateFilters(v *validator.Validator, f Filters) {
 	v.Check(f.Page > 0, "page", "must be greater than zero")
 	v.Check(f.Page < 10_000_000, "page", "must be a maximum of 10 million")
@@ -48,7 +52,7 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 	v.Check(validator.In(f.Sort, f.SortSafeList...), "sort", "invalid sort value")
 }
 
-// SortColumn Check that the client-provided Sort field matches one of the entries in our safeList
+// SortColumn checks that the client-provided Sort field matches one of the entries in our safeList
 // and if it does, extract the column name from the Sort field by stripping the leading
 // hyphen character (if one exists)
 func (f Filters) SortColumn() string {
@@ -61,7 +65,8 @@ func (f Filters) SortColumn() string {
 	panic("unsafe sort parameter: " + f.Sort)
 }
 
-// SortDirection Return the sort direction ("ASC" or "DESC") depending on the prefix character of the Sort field
+// SortDirection returns the sort direction ("ASC" or "DESC") depending on the prefix character of the
+// Sort field
 func (f Filters) SortDirection() string {
 	if strings.HasPrefix(f.Sort, "-") {
 		return "DESC"
@@ -70,12 +75,12 @@ func (f Filters) SortDirection() string {
 	return "ASC"
 }
 
-// Limit - returns limit.
+// Limit returns the PageSize
 func (f Filters) Limit() int {
 	return f.PageSize
 }
 
-// Offset - returns offset.
+// Offset calculates and returns the offset
 func (f Filters) Offset() int {
 	return (f.Page - 1) * f.PageSize
 }

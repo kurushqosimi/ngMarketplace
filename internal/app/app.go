@@ -48,8 +48,8 @@ func New(cfg *config.Config) (*App, error) {
 
 	//runner := async.NewBackgroundRunner(&a.wg)
 
-	categoryRepo := category.NewRepository(*pg)
-	categoryUseCase := category.NewUseCase(*categoryRepo)
+	categoryRepo := category.NewRepository(pg)
+	categoryUseCase := category.NewUseCase(categoryRepo)
 	categoryHandler := category.NewHandler(categoryUseCase, l)
 
 	router := router.NewRouter()
