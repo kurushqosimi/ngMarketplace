@@ -2,7 +2,7 @@ package generator
 
 import (
 	"log"
-	"ngMarketplace/internal/category/attribute_schema/parser"
+	"ngMarketplace/internal/common/attribute_schema/parser"
 )
 
 func main() {

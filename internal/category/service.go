@@ -11,7 +11,6 @@ import (
 type Storage interface {
 	Create(ctx context.Context, category *Category) error
 	GetByID(ctx context.Context, id string) (*Category, error)
-	GetAll(ctx context.Context) ([]*Category, error)
 	Update(ctx context.Context, category *Category) error
 	SoftDelete(ctx context.Context, id string) error
 	GetPaginated(ctx context.Context, categoryName string, language string, filters common.Filters) ([]*Category, int, error)
@@ -123,4 +122,8 @@ func (s *Service) GetCategories(ctx context.Context, filters getCategoriesReques
 	metadata := common.CalculateMetadata(totalRecords, filters.Page, filters.PageSize)
 
 	return categories, metadata, nil
+}
+
+func (s *Service) GetCategoryByParentID(ctx context.Context, parentID string) ([]*Category, error) {
+	return s.Repository.GetByParentID(ctx, parentID)
 }

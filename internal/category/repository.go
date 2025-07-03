@@ -238,58 +238,18 @@ func (r *Repository) GetPaginated(ctx context.Context, categoryName string, lang
 	return categories, totalRecords, nil
 }
 
-func (r *Repository) GetAll(ctx context.Context) ([]*Category, error) {
-	const op = "GetAll"
-
-	query := `
-		SELECT 
-		    category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
-		FROM 
-		    categories
-		WHERE 
-		    active = true`
-
-	rows, err := r.client.Pool.Query(ctx, query)
-	if err != nil {
-		return nil, postgres.ErrDoQuery(op, err)
-	}
-	defer rows.Close()
-
-	categories := []*Category{}
-
-	for rows.Next() {
-		var category Category
-		err = rows.Scan(
-			&category.CategoryID,
-			&category.CategoryName,
-			&category.ParentID,
-			&category.AttributeSchema,
-			&category.CreatedAt,
-			&category.Active,
-			&category.UpdatedAt,
-			&category.DeletedAt,
-		)
-		if err != nil {
-			return nil, postgres.ErrScan(op, err)
-		}
-
-		categories = append(categories, &category)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, postgres.ErrReadRows(op, err)
-	}
-
-	return categories, nil
-}
-
 func (r *Repository) GetByParentID(ctx context.Context, parentID string) ([]*Category, error) {
 	const op = "GetByParentID"
 
 	query := `
-		SELECT category_id, category_name, parent_id, attribute_schema, created_at, active, updated_at, deleted_at
-		FROM categories
-		WHERE active = true AND parent_id = $1`
+		SELECT 
+		    category_id, category_name, parent_id, language, attribute_schema, created_at, active, updated_at, deleted_at
+		FROM 
+		    categories
+		WHERE 
+		    active = true 
+		AND 
+			parent_id = $1`
 
 	categories := []*Category{}
 
@@ -304,6 +264,7 @@ func (r *Repository) GetByParentID(ctx context.Context, parentID string) ([]*Cat
 			&category.CategoryID,
 			&category.CategoryName,
 			&category.ParentID,
+			&category.Language,
 			&category.AttributeSchema,
 			&category.CreatedAt,
 			&category.Active,

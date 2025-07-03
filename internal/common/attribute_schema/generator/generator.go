@@ -2,8 +2,8 @@ package generator
 
 import (
 	"fmt"
-	"ngMarketplace/internal/category/attribute_schema/parser"
-	"ngMarketplace/internal/category/attribute_schema/translit"
+	"ngMarketplace/internal/common/attribute_schema/parser"
+	"ngMarketplace/internal/common/attribute_schema/translit"
 	"os"
 	"strings"
 )

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"ngMarketplace/internal/category/attribute_schema/parser"
+	"ngMarketplace/internal/common/attribute_schema/parser"
 	"ngMarketplace/pkg/validator"
 	"time"
 )

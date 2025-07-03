@@ -32,3 +32,8 @@ type getCategoriesRequest struct {
 	Language     string `form:"language"`
 	common.Filters
 }
+
+// getCategoryByParentIDRequest represents the param request for getting a category
+type getCategoryByParentIDRequest struct {
+	ParentID int64 `uri:"parent_id" binding:"required,min=1"`
+}

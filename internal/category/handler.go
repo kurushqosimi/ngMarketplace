@@ -9,11 +9,13 @@ import (
 	"ngMarketplace/internal/common"
 	"ngMarketplace/internal/transport/http/router"
 	"ngMarketplace/pkg/logger"
+	"strconv"
 )
 
 const (
-	categoriesURL = "/categories"
-	categoryURL   = "/categories/:id"
+	categoriesURL         = "/categories"
+	categoryURL           = "/categories/:id"
+	categoriesByParentURL = "/categories/parent/:parent_id"
 )
 
 type UseCase interface {
@@ -22,6 +24,7 @@ type UseCase interface {
 	UpdateCategory(ctx context.Context, categoryID int64, category *updateCategoryRequest) (*Category, error)
 	DeleteCategory(ctx context.Context, categoryID int64) error
 	GetCategories(ctx context.Context, filters getCategoriesRequest) ([]*Category, common.Metadata, error)
+	GetCategoryByParentID(ctx context.Context, parentID string) ([]*Category, error)
 }
 
 type Handler struct {
@@ -42,6 +45,7 @@ func (h *Handler) Register(router *gin.Engine) {
 	router.PATCH(categoryURL, h.updateCategoryHandler)
 	router.DELETE(categoryURL, h.deleteCategoryHandler)
 	router.GET(categoriesURL, h.listCategoriesHandler)
+	router.GET(categoriesByParentURL, h.getByParentIDHandler)
 }
 
 // CreateCategoryHandler creates a new category in the marketplace
@@ -212,6 +216,33 @@ func (h *Handler) listCategoriesHandler(ctx *gin.Context) {
 	if err := router.WriteJSON(ctx, http.StatusOK, gin.H{"categories": categories, "metadata": metadata}, nil); err != nil {
 		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
 		ctx.JSON(http.StatusOK, gin.H{"categories": categories, "metadata": metadata})
+		return
+	}
+}
+
+// getByParentIDHandler returns a list of categories by parent_id
+func (h *Handler) getByParentIDHandler(ctx *gin.Context) {
+	const op = "getByParentIDHandler"
+
+	var req getCategoryByParentIDRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		h.logger.Error("%s: ctx.ShouldBindUri: %v", op, err)
+		apperror.WriteBadRequestResponse(ctx, ErrInvalidID, "Provide correct category id")
+		return
+	}
+
+	parentID := strconv.Itoa(int(req.ParentID))
+
+	categories, err := h.useCase.GetCategoryByParentID(ctx, parentID)
+	if err != nil {
+		h.logger.Error("%s: h.useCase.GetCategoryByParentID: %v", op, err)
+		apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")
+		return
+	}
+
+	if err := router.WriteJSON(ctx, http.StatusOK, gin.H{"categories": categories}, nil); err != nil {
+		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
+		ctx.JSON(http.StatusOK, gin.H{"categories": categories})
 		return
 	}
 }
