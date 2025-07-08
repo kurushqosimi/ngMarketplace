@@ -24,8 +24,8 @@ func (r *Repository) Create(ctx context.Context, category *Category) error {
 	query := `
 		INSERT INTO 
 		    categories (category_name, parent_id, language,attribute_schema)
-		VALUES (
-		        $1, $2, $3, $4)
+		VALUES 
+		       ($1, $2, $3, $4)
 		RETURNING 
 			category_id, created_at, active`
 
@@ -238,6 +238,7 @@ func (r *Repository) GetPaginated(ctx context.Context, categoryName string, lang
 	return categories, totalRecords, nil
 }
 
+// GetByParentID gets categories by parent_id
 func (r *Repository) GetByParentID(ctx context.Context, parentID string) ([]*Category, error) {
 	const op = "GetByParentID"
 
@@ -285,6 +286,7 @@ func (r *Repository) GetByParentID(ctx context.Context, parentID string) ([]*Cat
 	return categories, nil
 }
 
+// Restore restores some category by category_ID
 func (r *Repository) Restore(ctx context.Context, categoryID string) error {
 	const op = "Restore"
 

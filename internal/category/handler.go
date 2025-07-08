@@ -66,8 +66,7 @@ func (h *Handler) createCategoryHandler(ctx *gin.Context) {
 		AttributeSchema: req.AttributeSchema,
 	}
 
-	err := h.useCase.Create(ctx, category)
-	if err != nil {
+	if err := h.useCase.Create(ctx, category); err != nil {
 		h.logger.Error("%s: h.useCase.Create: %v", op, err)
 		switch {
 		case errors.Is(err, ErrCategoryValidationFailed):
@@ -84,7 +83,7 @@ func (h *Handler) createCategoryHandler(ctx *gin.Context) {
 		return
 	}
 
-	if err = router.WriteJSON(ctx, http.StatusCreated, gin.H{"category": category}, nil); err != nil {
+	if err := router.WriteJSON(ctx, http.StatusCreated, gin.H{"category": category}, nil); err != nil {
 		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
 		ctx.JSON(http.StatusCreated, gin.H{"category": category})
 		return
