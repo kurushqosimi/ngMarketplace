@@ -7,3 +7,8 @@ type createProductRequest struct {
 	CategoryID int     `json:"category_id" binding:"required,min=1"`
 	UserID     int     `json:"user_id" binding:"required,min=1"`
 }
+
+// getProductRequest represents the param request for getting a product
+type getProductRequest struct {
+	ID int64 `uri:"id" binding:"required,min=1"`
+}

@@ -30,4 +30,10 @@ docker-compose-restart:
 	docker rmi ngmarketplace-api
 	docker compose up -d
 
-.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 server docker-compose-restart
+docker-compose-up:
+	docker compose up -d
+
+docker-compose-down:
+	docker compose down
+
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 server docker-compose-restart docker-compose-up docker-compose-down

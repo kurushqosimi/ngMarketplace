@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	productURL  = "/product/:id"
+	productURL  = "/products/:id"
 	productsURL = "/products"
 )
 
 type UseCase interface {
 	CreateProduct(ctx context.Context, product *Product) error
+	GetProduct(ctx context.Context, id int64) (*Product, error)
 }
 
 type Handler struct {
@@ -33,6 +34,7 @@ func NewHandler(useCase UseCase, logger logger.Logger) *Handler {
 
 func (h *Handler) Register(router *gin.Engine) {
 	router.POST(productsURL, h.createProductHandler)
+	router.GET(productURL, h.showProductHandler)
 }
 
 // createProductHandler creates a new Product in Marketplace
@@ -71,6 +73,36 @@ func (h *Handler) createProductHandler(ctx *gin.Context) {
 	if err := router.WriteJSON(ctx, http.StatusCreated, gin.H{"product": product}, nil); err != nil {
 		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
 		ctx.JSON(http.StatusCreated, gin.H{"product": product})
+		return
+	}
+}
+
+// showProductHandler gets a product by product_id
+func (h *Handler) showProductHandler(ctx *gin.Context) {
+	const op = "getProductHandler"
+
+	var req getProductRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		h.logger.Error("%s: ctx.ShouldBindUri: %v", op, err)
+		apperror.WriteBadRequestResponse(ctx, ErrInvalidID, "Provide correct category id")
+		return
+	}
+
+	product, err := h.useCase.GetProduct(ctx, req.ID)
+	if err != nil {
+		h.logger.Error("%s: h.useCase.GetCategory: %v", op, err)
+		switch {
+		case errors.Is(err, ErrProductNotFound):
+			apperror.WriteNotFoundResponse(ctx, err, "Product you are seeking does not exist")
+		default:
+			apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")
+		}
+		return
+	}
+
+	if err = router.WriteJSON(ctx, http.StatusOK, gin.H{"product": product}, nil); err != nil {
+		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
+		ctx.JSON(http.StatusOK, gin.H{"product": product})
 		return
 	}
 }

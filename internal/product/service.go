@@ -8,6 +8,7 @@ import (
 
 type Storage interface {
 	Create(ctx context.Context, product *Product) error
+	GetByID(ctx context.Context, id int64) (*Product, error)
 }
 
 type Service struct {
@@ -30,4 +31,8 @@ func (s *Service) CreateProduct(ctx context.Context, product *Product) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetProduct(ctx context.Context, id int64) (*Product, error) {
+	return s.Repository.GetByID(ctx, id)
 }

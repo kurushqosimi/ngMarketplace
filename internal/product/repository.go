@@ -62,3 +62,44 @@ func (r *Repository) Create(ctx context.Context, product *Product) error {
 
 	return nil
 }
+
+// GetByID method gets a product by ID
+func (r *Repository) GetByID(ctx context.Context, id int64) (*Product, error) {
+	const op = "GetByID"
+
+	query := `
+		SELECT 
+		    product_id, price, currency, category_id, user_id, created_at, active, updated_at, deleted_at
+		FROM 
+		    products
+		WHERE 
+		    active = true 
+		AND 
+			product_id = $1
+		LIMIT 1`
+
+	var product Product
+
+	if err := r.client.Pool.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&product.ProductID,
+		&product.Price,
+		&product.Currency,
+		&product.CategoryID,
+		&product.UserID,
+		&product.CreatedAt,
+		&product.Active,
+		&product.UpdatedAt,
+		&product.DeletedAt,
+	); err != nil {
+		if errors.Is(err, postgres.ErrNoRows) {
+			return nil, ErrProductNotFound
+		}
+		return nil, postgres.ErrDoQuery(op, err)
+	}
+
+	return &product, nil
+}

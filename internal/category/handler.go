@@ -105,7 +105,7 @@ func (h *Handler) showCategoryHandler(ctx *gin.Context) {
 	if err != nil {
 		h.logger.Error("%s: h.useCase.GetCategory: %v", op, err)
 		switch {
-		case errors.Is(err, ErrNotFound):
+		case errors.Is(err, ErrCategoryNotFound):
 			apperror.WriteNotFoundResponse(ctx, err, "Category you are seeking does not exist")
 		default:
 			apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")
@@ -143,7 +143,7 @@ func (h *Handler) updateCategoryHandler(ctx *gin.Context) {
 	if err != nil {
 		h.logger.Error("%s: h.useCase.UpdateCategory: %v", op, err)
 		switch {
-		case errors.Is(err, ErrNotFound) || errors.Is(err, ErrNotFoundForUpdate):
+		case errors.Is(err, ErrCategoryNotFound) || errors.Is(err, ErrNotFoundForUpdate):
 			apperror.WriteNotFoundResponse(ctx, err, "Category you are seeking to update does not exist")
 		case errors.Is(err, ErrCategoryValidationFailed):
 			apperror.WriteBadRequestResponse(ctx, err, err.Error())

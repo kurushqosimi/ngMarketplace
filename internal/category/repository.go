@@ -101,7 +101,7 @@ func (r *Repository) GetByID(ctx context.Context, id string) (*Category, error) 
 		&category.DeletedAt,
 	); err != nil {
 		if errors.Is(err, postgres.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, ErrCategoryNotFound
 		}
 		return nil, postgres.ErrDoQuery(op, err)
 	}
@@ -302,7 +302,7 @@ func (r *Repository) Restore(ctx context.Context, categoryID string) error {
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		return ErrNotFound
+		return ErrCategoryNotFound
 	}
 
 	return nil

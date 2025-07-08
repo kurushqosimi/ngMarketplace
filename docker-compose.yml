@@ -5,8 +5,8 @@ services:
       - POSTGRES_USER=marketplace
       - POSTGRES_PASSWORD=marketplace
       - POSTGRES_DB=marketplace_db
-#    volumes: #if you want persistent data uncomment it
-#      - postgres_data:/var/lib/postgresql/data
+    volumes: #if you want persistent data uncomment it
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
@@ -23,5 +23,5 @@ services:
     entrypoint: [ "/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh" ]
     command: [ "/app/main" ]
 
-#volumes: #if you want persistent data uncomment it
-#  postgres_data:
+volumes: #if you want persistent data uncomment it
+  postgres_data:
