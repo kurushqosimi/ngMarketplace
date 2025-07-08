@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"ngMarketplace/pkg/postgres"
+	"time"
 )
 
 type Repository struct {
@@ -102,4 +103,74 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*Product, error) {
 	}
 
 	return &product, nil
+}
+
+// Update method updates product
+func (r *Repository) Update(ctx context.Context, product *Product) error {
+	const op = "Update"
+
+	query := `
+		UPDATE 
+		    products
+		SET 
+		    price = $1, 
+		    currency = $2, 
+		    category_id = $3
+		WHERE 
+		    product_id = $4
+		AND 
+		    active = true
+		RETURNING updated_at`
+
+	args := []interface{}{
+		product.Price,
+		product.Currency,
+		product.CategoryID,
+		product.ProductID,
+	}
+
+	if err := r.client.Pool.QueryRow(
+		ctx,
+		query,
+		args...,
+	).Scan(&product.UpdatedAt); err != nil {
+		switch {
+		case errors.Is(err, postgres.ErrNoRows):
+			return ErrProductNotFound
+		default:
+			return postgres.ErrDoQuery(op, err)
+		}
+	}
+
+	return nil
+}
+
+// SoftDelete method deletes product softly, meaning that it makes active false and that's it
+func (r *Repository) SoftDelete(ctx context.Context, id int64) error {
+	const op = "Delete"
+
+	query := `
+		UPDATE 
+		    products
+		SET 
+		    deleted_at = now(), 
+		    active = false
+		WHERE 
+		    product_id = $1 
+		AND 
+		    active = true
+		RETURNING deleted_at`
+
+	var deletedAt *time.Time
+	err := r.client.Pool.QueryRow(ctx, query, id).Scan(&deletedAt)
+	if err != nil {
+		switch {
+		case errors.Is(err, postgres.ErrNoRows):
+			return ErrProductNotFound
+		default:
+			return postgres.ErrDoQuery(op, err)
+		}
+	}
+
+	return nil
 }

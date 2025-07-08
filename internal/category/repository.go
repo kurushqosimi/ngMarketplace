@@ -69,7 +69,7 @@ func (r *Repository) Create(ctx context.Context, category *Category) error {
 }
 
 // GetByID method gets a category by ID
-func (r *Repository) GetByID(ctx context.Context, id string) (*Category, error) {
+func (r *Repository) GetByID(ctx context.Context, id int64) (*Category, error) {
 	const op = "GetByID"
 
 	query := `
@@ -142,7 +142,7 @@ func (r *Repository) Update(ctx context.Context, category *Category) error {
 	).Scan(&category.UpdatedAt); err != nil {
 		switch {
 		case errors.Is(err, postgres.ErrNoRows):
-			return ErrNotFoundForUpdate
+			return ErrCategoryNotFound
 		default:
 			return postgres.ErrDoQuery(op, err)
 		}
@@ -152,7 +152,7 @@ func (r *Repository) Update(ctx context.Context, category *Category) error {
 }
 
 // SoftDelete method deletes category softly, meaning that it makes active false and that's it
-func (r *Repository) SoftDelete(ctx context.Context, id string) error {
+func (r *Repository) SoftDelete(ctx context.Context, id int64) error {
 	const op = "Delete"
 
 	query := `
@@ -172,7 +172,7 @@ func (r *Repository) SoftDelete(ctx context.Context, id string) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, postgres.ErrNoRows):
-			return ErrNotFoundForDelete
+			return ErrCategoryNotFound
 		default:
 			return postgres.ErrDoQuery(op, err)
 		}
@@ -239,7 +239,7 @@ func (r *Repository) GetPaginated(ctx context.Context, categoryName string, lang
 }
 
 // GetByParentID gets categories by parent_id
-func (r *Repository) GetByParentID(ctx context.Context, parentID string) ([]*Category, error) {
+func (r *Repository) GetByParentID(ctx context.Context, parentID int64) ([]*Category, error) {
 	const op = "GetByParentID"
 
 	query := `
@@ -287,7 +287,7 @@ func (r *Repository) GetByParentID(ctx context.Context, parentID string) ([]*Cat
 }
 
 // Restore restores some category by category_ID
-func (r *Repository) Restore(ctx context.Context, categoryID string) error {
+func (r *Repository) Restore(ctx context.Context, categoryID int64) error {
 	const op = "Restore"
 
 	query := `

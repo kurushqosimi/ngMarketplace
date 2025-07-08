@@ -9,7 +9,6 @@ import (
 	"ngMarketplace/internal/common"
 	"ngMarketplace/internal/transport/http/router"
 	"ngMarketplace/pkg/logger"
-	"strconv"
 )
 
 const (
@@ -24,7 +23,7 @@ type UseCase interface {
 	UpdateCategory(ctx context.Context, categoryID int64, category *updateCategoryRequest) (*Category, error)
 	DeleteCategory(ctx context.Context, categoryID int64) error
 	GetCategories(ctx context.Context, filters getCategoriesRequest) ([]*Category, common.Metadata, error)
-	GetCategoryByParentID(ctx context.Context, parentID string) ([]*Category, error)
+	GetCategoryByParentID(ctx context.Context, parentID int64) ([]*Category, error)
 }
 
 type Handler struct {
@@ -143,7 +142,7 @@ func (h *Handler) updateCategoryHandler(ctx *gin.Context) {
 	if err != nil {
 		h.logger.Error("%s: h.useCase.UpdateCategory: %v", op, err)
 		switch {
-		case errors.Is(err, ErrCategoryNotFound) || errors.Is(err, ErrNotFoundForUpdate):
+		case errors.Is(err, ErrCategoryNotFound):
 			apperror.WriteNotFoundResponse(ctx, err, "Category you are seeking to update does not exist")
 		case errors.Is(err, ErrCategoryValidationFailed):
 			apperror.WriteBadRequestResponse(ctx, err, err.Error())
@@ -174,7 +173,7 @@ func (h *Handler) deleteCategoryHandler(ctx *gin.Context) {
 	if err := h.useCase.DeleteCategory(ctx, req.ID); err != nil {
 		h.logger.Error("%s: h.useCase.DeleteCategory: %v", op, err)
 		switch {
-		case errors.Is(err, ErrNotFoundForDelete):
+		case errors.Is(err, ErrCategoryNotFound):
 			apperror.WriteNotFoundResponse(ctx, err, "Category you are seeking to delete does not exist")
 		default:
 			apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")
@@ -230,9 +229,7 @@ func (h *Handler) getByParentIDHandler(ctx *gin.Context) {
 		return
 	}
 
-	parentID := strconv.Itoa(int(req.ParentID))
-
-	categories, err := h.useCase.GetCategoryByParentID(ctx, parentID)
+	categories, err := h.useCase.GetCategoryByParentID(ctx, req.ParentID)
 	if err != nil {
 		h.logger.Error("%s: h.useCase.GetCategoryByParentID: %v", op, err)
 		apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")

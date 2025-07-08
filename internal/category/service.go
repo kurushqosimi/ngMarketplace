@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"ngMarketplace/internal/common"
 	"ngMarketplace/pkg/validator"
-	"strconv"
 )
 
 type Storage interface {
 	Create(ctx context.Context, category *Category) error
-	GetByID(ctx context.Context, id string) (*Category, error)
+	GetByID(ctx context.Context, id int64) (*Category, error)
 	Update(ctx context.Context, category *Category) error
-	SoftDelete(ctx context.Context, id string) error
+	SoftDelete(ctx context.Context, id int64) error
 	GetPaginated(ctx context.Context, categoryName string, language string, filters common.Filters) ([]*Category, int, error)
-	GetByParentID(ctx context.Context, parentID string) ([]*Category, error)
-	Restore(ctx context.Context, categoryID string) error
+	GetByParentID(ctx context.Context, parentID int64) ([]*Category, error)
+	Restore(ctx context.Context, categoryID int64) error
 }
 
 type Service struct {
@@ -41,14 +40,11 @@ func (s *Service) Create(ctx context.Context, category *Category) error {
 }
 
 func (s *Service) GetCategory(ctx context.Context, categoryID int64) (*Category, error) {
-	categoryIDStr := strconv.Itoa(int(categoryID))
-	return s.Repository.GetByID(ctx, categoryIDStr)
+	return s.Repository.GetByID(ctx, categoryID)
 }
 
 func (s *Service) UpdateCategory(ctx context.Context, categoryID int64, newCategory *updateCategoryRequest) (*Category, error) {
-	categoryIDStr := strconv.Itoa(int(categoryID))
-
-	category, err := s.Repository.GetByID(ctx, categoryIDStr)
+	category, err := s.Repository.GetByID(ctx, categoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +79,7 @@ func (s *Service) UpdateCategory(ctx context.Context, categoryID int64, newCateg
 }
 
 func (s *Service) DeleteCategory(ctx context.Context, categoryID int64) error {
-	categoryIDStr := strconv.Itoa(int(categoryID))
-	return s.Repository.SoftDelete(ctx, categoryIDStr)
+	return s.Repository.SoftDelete(ctx, categoryID)
 }
 
 func (s *Service) GetCategories(ctx context.Context, filters getCategoriesRequest) ([]*Category, common.Metadata, error) {
@@ -124,6 +119,6 @@ func (s *Service) GetCategories(ctx context.Context, filters getCategoriesReques
 	return categories, metadata, nil
 }
 
-func (s *Service) GetCategoryByParentID(ctx context.Context, parentID string) ([]*Category, error) {
+func (s *Service) GetCategoryByParentID(ctx context.Context, parentID int64) ([]*Category, error) {
 	return s.Repository.GetByParentID(ctx, parentID)
 }

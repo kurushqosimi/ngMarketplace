@@ -66,8 +66,6 @@ var (
 	ErrInvalidParentID   = errors.New("parent category does not exist")
 	ErrConnectionFailed  = errors.New("database connection failed")
 	ErrCategoryNotFound  = errors.New("category not found")
-	ErrNotFoundForUpdate = errors.New("no active category to update")
-	ErrNotFoundForDelete = errors.New("no active category to delete")
 )
 
 // Service Errors

@@ -29,8 +29,6 @@ var (
 	ErrInvalidForeignKey = errors.New("category_id or user_id does not exist")
 	ErrConnectionFailed  = errors.New("database connection failed")
 	ErrProductNotFound   = errors.New("product not found")
-	ErrNotFoundForUpdate = errors.New("no active product to update")
-	ErrNotFoundForDelete = errors.New("no active product to delete")
 )
 
 // Service Errors
