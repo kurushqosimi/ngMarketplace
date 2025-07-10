@@ -56,8 +56,8 @@ CREATE TABLE "products"
     "currency"    VARCHAR(3) DEFAULT 'TJS',
     "category_id" INTEGER,
     "user_id"     INTEGER NOT NULL,
-    "active"      BOOLEAN          DEFAULT true,
     "created_at"  TIMESTAMP DEFAULT now(),
+    "active"      BOOLEAN          DEFAULT true,
     "updated_at"  TIMESTAMP DEFAULT now(),
     "deleted_at"  TIMESTAMP
 );

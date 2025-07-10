@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ngMarketplace/internal/common"
 	"ngMarketplace/pkg/postgres"
 	"time"
 )
@@ -173,4 +174,87 @@ func (r *Repository) SoftDelete(ctx context.Context, id int64) error {
 	}
 
 	return nil
+}
+
+// GetPaginated method returns the list of products and total data for metadata
+func (r *Repository) GetPaginated(
+	ctx context.Context,
+	currency string,
+	categoryID int,
+	userID int,
+	fromPrice float64,
+	toPrice float64,
+	filters common.Filters,
+) (
+	[]*Product,
+	int,
+	error,
+) {
+	const op = "GetPaginated"
+
+	query := fmt.Sprintf(`
+		SELECT 
+		    count(*) OVER(), product_id, price, currency, category_id, user_id, created_at, active, updated_at, deleted_at
+		FROM 
+		    products
+		WHERE 
+		    (currency = $1 OR $1 = '')
+		AND
+		    (category_id = $2 OR $2 = 0)
+		AND
+		    (user_id = $3 OR $3 = 0)
+		AND 
+		    (price >= $4 OR $4 = 0)
+		AND 
+		    (price <= $5 OR $5 = 0)
+		ORDER BY
+		    %s %s, category_id ASC
+		LIMIT $6 
+		OFFSET $7`, filters.SortColumn(), filters.SortDirection())
+
+	args := []interface{}{
+		currency,
+		categoryID,
+		userID,
+		fromPrice,
+		toPrice,
+		filters.Limit(),
+		filters.Offset(),
+	}
+
+	rows, err := r.client.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, postgres.ErrDoQuery(op, err)
+	}
+	defer rows.Close()
+
+	totalRecords := 0
+	products := []*Product{}
+
+	for rows.Next() {
+		var product Product
+		err = rows.Scan(
+			&totalRecords,
+			&product.ProductID,
+			&product.Price,
+			&product.Currency,
+			&product.CategoryID,
+			&product.UserID,
+			&product.CreatedAt,
+			&product.Active,
+			&product.UpdatedAt,
+			&product.DeletedAt,
+		)
+		if err != nil {
+			return nil, 0, postgres.ErrScan(op, err)
+		}
+
+		products = append(products, &product)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, 0, postgres.ErrReadRows(op, err)
+	}
+
+	return products, totalRecords, nil
 }

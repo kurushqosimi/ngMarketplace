@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"ngMarketplace/internal/apperror"
+	"ngMarketplace/internal/common"
 	"ngMarketplace/internal/transport/http/router"
 	"ngMarketplace/pkg/logger"
 )
@@ -20,6 +21,7 @@ type UseCase interface {
 	GetProduct(ctx context.Context, id int64) (*Product, error)
 	UpdateProduct(ctx context.Context, id int64, request *updateProductRequest) (*Product, error)
 	DeleteProduct(ctx context.Context, id int64) error
+	GetProducts(ctx context.Context, filters getProductsRequest) ([]*Product, common.Metadata, error)
 }
 
 type Handler struct {
@@ -181,6 +183,32 @@ func (h *Handler) deleteProductHandler(ctx *gin.Context) {
 	}
 }
 
+// listProductsHandler returns a list of products by filters
 func (h *Handler) listProductsHandler(ctx *gin.Context) {
+	const op = "listProductsHandler"
 
+	var req getProductsRequest
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		h.logger.Error("%s: ctx.ShouldBindQuery: %v", op, err)
+		apperror.WriteBadRequestResponse(ctx, err, "some filter was sent with incorrect type")
+		return
+	}
+
+	products, metadata, err := h.useCase.GetProducts(ctx, req)
+	if err != nil {
+		switch {
+		case errors.Is(err, common.ErrFilterValidationFailed):
+			apperror.WriteBadRequestResponse(ctx, err, "check filter parameters")
+		default:
+			apperror.WriteInternalErrResponse(ctx, err, "Unexpected error occurred")
+		}
+		return
+	}
+
+	if err := router.WriteJSON(ctx, http.StatusOK, gin.H{"products": products, "metadata": metadata}, nil); err != nil {
+		h.logger.Warn("%s: router.WriteJSON: %v", op, err)
+		ctx.JSON(http.StatusOK, gin.H{"products": products, "metadata": metadata})
+		return
+	}
 }

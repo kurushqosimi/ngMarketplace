@@ -307,5 +307,3 @@ func (r *Repository) Restore(ctx context.Context, categoryID int64) error {
 
 	return nil
 }
-
-// TODO implement it in service GetCategoryTree
